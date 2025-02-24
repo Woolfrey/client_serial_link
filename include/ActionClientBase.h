@@ -14,14 +14,13 @@
  * 
  * @license GNU General Public License V3
  * 
- * @see https://github.com/Woolfrey/software_robot_library for more information on the KinematicTree class.
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
 #ifndef ACTION_CLIENT_BASE_H
 #define ACTION_CLIENT_BASE_H
 
-#include <client/ActionClientInterface.h>
+#include <ActionClientInterface.h>
 #include <memory>
 #include <string>
 #include <action_msgs/srv/cancel_goal.hpp>
@@ -127,5 +126,7 @@ class ActionClientBase : public ActionClientInterface
         void
         cancel_callback(const typename rclcpp_action::Client<Action>::CancelResponse::SharedPtr response);
 };
+
+#include <ActionClientBase.tpp>
 
 #endif

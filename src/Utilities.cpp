@@ -12,19 +12,33 @@
  * 
  * @license GNU General Public License V3
  * 
- * @see https://github.com/Woolfrey/software_robot_library for more information on the SerialLinkBase class.
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
 #include <Utilities.h>
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //                    Load tolerances for trajectory tracking from parameter file                 //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+std::vector<double>
+load_joint_tolerances()
+{
+    std::vector<double> tolerances;                                                                 // Storage location    
+    
+    auto configNode = rclcpp::Node::make_shared("joint_configurations");                            // MUST match the name in the config file
+    configNode->declare_parameter("tolerances", std::vector<double>{});
+    configNode->get_parameter("tolerances", tolerances);
+    
+    return tolerances;
+}
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                     Put joint trajectory points in to a searchable std::map                    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-std::map<std::string, std::vector<serial_link_action_server::msg::JointTrajectoryPoint>>
+std::map<std::string, std::vector<serial_link_interfaces::msg::JointTrajectoryPoint>>
 load_joint_configurations()
 {
-    using JointTrajectoryPoint = serial_link_action_server::msg::JointTrajectoryPoint;              // Makes referencing easier
+    using JointTrajectoryPoint = serial_link_interfaces::msg::JointTrajectoryPoint;                 // Makes referencing easier
     
     std::map<std::string,std::vector<JointTrajectoryPoint>> jointConfigurations;                    // We want to return this
     
@@ -101,10 +115,10 @@ load_joint_configurations()
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                    Put Cartesian trajectory points in to a searchable std::map                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-std::map<std::string,std::vector<serial_link_action_server::msg::CartesianTrajectoryPoint>>
+std::map<std::string,std::vector<serial_link_interfaces::msg::CartesianTrajectoryPoint>>
 load_endpoint_poses()
 {
-    using CartesianTrajectoryPoint = serial_link_action_server::msg::CartesianTrajectoryPoint;      // For easier referencing
+    using CartesianTrajectoryPoint = serial_link_interfaces::msg::CartesianTrajectoryPoint;      // For easier referencing
     
     std::map<std::string, std::vector<CartesianTrajectoryPoint>> endpointPoses;                     // We want to return this
     
@@ -163,7 +177,7 @@ load_endpoint_poses()
         {
             CartesianTrajectoryPoint point;
             
-            point.reference = code;
+            point.reference_frame = code;
      
             point.time = times[i];
             

@@ -1,7 +1,8 @@
-joint_configurations:                   # This must match the name of the node that gets them
+joint_configurations:                                   # This must match the name of the node that gets them
   ros__parameters:
-    number_of_joints: 7                 # We need this to split up the position arrays
-    names: ["home", "ready", "multi"]   # We need to declare them here so we can search them by name
+    tolerances: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    number_of_joints: 7                                 # We need this to split up the position arrays
+    names: ["home", "ready", "multi"]                   # We need to declare them here so we can search them by name
     home:
         positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         times: [4.0]

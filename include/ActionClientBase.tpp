@@ -14,11 +14,10 @@
  * 
  * @license GNU General Public License V3
  * 
- * @see https://github.com/Woolfrey/software_robot_library for more information on the KinematicTree class.
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include <client/ActionClientBase.h>
+#include <ActionClientBase.h>
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                           Constructor                                          //
@@ -33,7 +32,7 @@ ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientN
     // Attach the response callback after an action request is sent
     _options.goal_response_callback = std::bind
     (
-        &ActionClientBase::response_callback,                                                       // Name of the method
+        &ActionClientBase::handle_response,                                                         // Name of the method
         this,                                                                                       // Attach this node
         std::placeholders::_1                                                                       // I don't know what this does
     );
@@ -41,7 +40,7 @@ ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientN
     // Attach the result callback for when an action is finished
     _options.result_callback = std::bind
     (
-        &ActionClientBase::result_callback,                                                         // Name of the method
+        &ActionClientBase::handle_result,                                                           // Name of the method
         this,                                                                                       // Attach this node
         std::placeholders::_1                                                                       // I don't know what this does
     );
@@ -129,7 +128,7 @@ ActionClientBase<Action>::cancel_action()
         _goalHandle,
         [this](const typename rclcpp_action::Client<Action>::CancelResponse::SharedPtr response)
         {
-            this->handle_cancel(response);
+            this->cancel_callback(response);
         }
     );
 
@@ -149,35 +148,22 @@ ActionClientBase<Action>::cancel_action()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class Action>
 void
-ActionClientBase<Action>::cancel_callback(const typename rclcpp_action::Client<Action>::CancelResponse::SharedPtr cancelResponse)
+ActionClientBase<Action>::cancel_callback(const typename rclcpp_action::Client<Action>::CancelResponse::SharedPtr response)
 {
-    switch (cancelResponse->return_code)
+    switch (response->return_code)
     {
-        case rclcpp_action::CancelResponse::ERROR_NONE:
-        {
-            RCLCPP_INFO(node->get_logger(), "Cancel succeeded.");
+        case action_msgs::srv::CancelGoal::Response::ERROR_REJECTED:
+            RCLCPP_ERROR(_node->get_logger(), "Cancel rejected.");
             break;
-        }
-        case rclcpp_action::CancelResponse::ERROR_REJECTED:
-        {
-            RCLCPP_ERROR(node->get_logger(), "Cancel rejected.");
+        case action_msgs::srv::CancelGoal::Response::ERROR_UNKNOWN_GOAL_ID:
+            RCLCPP_ERROR(_node->get_logger(), "Unknown goal ID.");
             break;
-        }
-        case rclcpp_action::CancelResponse::ERROR_UNKNOWN_GOAL_ID:
-        {
-            RCLCPP_ERROR(node->get_logger(), "Unknown goal ID.");
+        case action_msgs::srv::CancelGoal::Response::ERROR_GOAL_TERMINATED:
+            RCLCPP_ERROR(_node->get_logger(), "Goal already terminated.");
             break;
-        }
-        case rclcpp_action::CancelResponse::ERROR_GOAL_TERMINATED:
-        {
-            RCLCPP_ERROR(node->get_logger(), "Goal already terminated.");
-            break;
-        }
         default:
-        {
-            RCLCPP_ERROR(node->get_logger(), "Unknown error.");
-        }
+            RCLCPP_INFO(_node->get_logger(), "Cancel succeeded.");
+            break;
     }
 }
 
-#endif
