@@ -1,6 +1,6 @@
-endpoint_poses:                                                               # This must match the name of the node that gets them
+serial_link_client: # <- THIS MUST MATCH THE NODE NAME
   ros__parameters:
-    names: ["up", "down", "left", "right", "fore", "aft", "round"]            # We need to declare them here so we can search them by name
+    pose_names: ["up", "down", "left", "right", "fore", "aft", "round"] # We need to declare them here so we can search them by name
     up:
         poses: [0.0, 0.0, 0.2, 0.0, 0.0, 0.0]
         times: [2.0]
