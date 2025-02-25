@@ -23,25 +23,32 @@
 #include "serial_link_interfaces/msg/cartesian_trajectory_point.hpp"
 
 /**
- * @brief Get the tolerances on the trajectory tracking error
+ * @brief Get the tolerances on joint position error in joint feedback control.
  * @return A std::vector<double> object of tolerances.
  */
 std::vector<double>
-load_joint_tolerances();
+load_joint_error_tolerances(const std::shared_ptr<rclcpp::Node> &node);
+
+/**
+ * @brief Get the tolerances for the position & orientation error in Cartesian feedback control.
+ * @return A std::array<double,2> containing the maximum (norm) of the position error, and (norm) of the orientation error.
+ */
+std::array<double,2>
+load_pose_error_tolerances(const std::shared_ptr<rclcpp::Node> &node);
 
 /**
  * @brief Store pre-defined joint trajectories and save them in a std::map.
  * @return A std::map where the key is the trajectory name specified in the YAML file.
  */
 std::map<std::string, std::vector<serial_link_interfaces::msg::JointTrajectoryPoint>>
-load_joint_configurations();
+load_joint_configurations(const std::shared_ptr<rclcpp::Node> &node);
 
 /**
  * @brief Store pre-defined Cartesian trajectories in a std::map
  * @return A std::map where the key is the trajectory name specified in the YAML file.
  */
 std::map<std::string,std::vector<serial_link_interfaces::msg::CartesianTrajectoryPoint>>
-load_endpoint_poses();
+load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node);
 
 /**
  * @brief This function manages the asynchronous cancellation sequence.
