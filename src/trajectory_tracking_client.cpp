@@ -20,16 +20,16 @@
 
 #include "TrackCartesianTrajectory.h"
 #include "TrackJointTrajectory.h"
-#include <random>                                                                                   // For generating random numbers
 #include "rclcpp/rclcpp.hpp"                                                                        // ROS2 C++ library
 #include "rclcpp_action/rclcpp_action.hpp"                                                          // ROS2 C++ action library
 #include <thread>                                                                                   // Threading (duh!)
 #include "Utilities.h"                                                                              // Useful functions
 
-using JointTrajectoryPoint      = serial_link_interfaces::msg::JointTrajectoryPoint;
-using CartesianTrajectoryPoint  = serial_link_interfaces::msg::CartesianTrajectoryPoint;
-using CartesianTrajectoryAction = serial_link_interfaces::action::TrackCartesianTrajectory;
+// These make code easier to read:
 using JointTrajectoryAction     = serial_link_interfaces::action::TrackJointTrajectory;
+using JointTrajectoryPoint      = serial_link_interfaces::msg::JointTrajectoryPoint;
+using CartesianTrajectoryAction = serial_link_interfaces::action::TrackCartesianTrajectory;
+using CartesianTrajectoryPoint  = serial_link_interfaces::msg::CartesianTrajectoryPoint;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                          MAIN                                                   //
@@ -38,11 +38,16 @@ int main(int argc, char **argv)
 {   
     rclcpp::init(argc, argv);                                                                       // Starts up ROS2
    
-    auto clientNode = rclcpp::Node::make_shared("trajectory_tracking_client");                      // Create client node and advertise its name
-    auto jointConfigurations = load_joint_configurations();                                         // From the parameter server
-    auto endpointPoses = load_endpoint_poses();                                                     // From the parameter server
-    auto joint_tolerances = load_joint_tolerances();
+    std::shared_ptr<rclcpp::Node> clientNode = rclcpp::Node::make_shared("serial_link_client");     // Create client node
     
+    // Load parameters.
+    // NOTE: First line of YAML file MUST match the node name declared above.
+    
+    std::map<std::string, std::vector<JointTrajectoryPoint>> jointConfigurations = load_joint_configurations(clientNode);
+    std::map<std::string, std::vector<CartesianTrajectoryPoint>> endpointPoses = load_endpoint_poses(clientNode);
+    std::vector<double> jointTrackingTolerances = load_joint_error_tolerances(clientNode);
+    std::array<double,2> cartesianTrackingTolerance = load_pose_error_tolerances(clientNode);
+  
     // Create the action clients, attach to node
     TrackJointTrajectory jointTrajectoryClient(clientNode, "track_joint_trajectory", true);
     TrackCartesianTrajectory cartesianTrajectoryClient(clientNode, "track_cartesian_trajectory", true);  
@@ -53,7 +58,7 @@ int main(int argc, char **argv)
     while (rclcpp::ok())
     {
         // Get user input
-        RCLCPP_INFO(clientNode->get_logger(), "Enter a command. Type 'options' to a see a list.");
+        RCLCPP_INFO(clientNode->get_logger(), "Enter a command. Type 'options' to a see a list. Press Enter to cancel.");
         std::string commandPrompt;
         std::getline(std::cin, commandPrompt);
         
@@ -84,19 +89,16 @@ int main(int argc, char **argv)
         }
         else
         {
-            auto iterator = jointConfigurations.find(commandPrompt);
+            auto iterator = jointConfigurations.find(commandPrompt);                                // Find the named configuration
             
             if (iterator != jointConfigurations.end())
             {   
-                if (activeClient != nullptr and activeClient->is_running())
-                {
-                    stop_robot(activeClient);
-                }
+                if (activeClient != nullptr and activeClient->is_running()) stop_robot(activeClient);
                 
                 auto goal = std::make_shared<JointTrajectoryAction::Goal>();                        // Generate goal object
                 
                 goal->points = iterator->second;                                                    // Attach the joint trajectory
-                goal->tolerances = joint_tolerances;
+                goal->tolerances = jointTrackingTolerances;
                 
                 RCLCPP_INFO(clientNode->get_logger(), "Moving to `%s` configuration(s).", commandPrompt.c_str()); // Inform user
 
@@ -118,6 +120,8 @@ int main(int argc, char **argv)
                     auto goal = std::make_shared<CartesianTrajectoryAction::Goal>();                // Generate goal object
                     
                     goal->points = iterator->second;                                                // Attach the joint trajectory
+                    goal->position_tolerance = cartesianTrackingTolerance[0];
+                    goal->orientation_tolerance = cartesianTrackingTolerance[1];
                     
                     RCLCPP_INFO(clientNode->get_logger(), "Moving `%s` .", commandPrompt.c_str());  // Inform user
 
