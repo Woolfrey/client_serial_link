@@ -43,7 +43,7 @@ class TrackCartesianTrajectory : public ActionClientBase<serial_link_interfaces:
             // Override the result callback in the base class
             _options.result_callback = std::bind
             (
-                &TrackCartesianTrajectory::result_callback,                                        // Name of the method
+                &TrackCartesianTrajectory::result_callback,                                         // Name of the method
                 this,                                                                               // Attach this node
                 std::placeholders::_1                                                               // I don't know what this does
             );
