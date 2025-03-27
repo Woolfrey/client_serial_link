@@ -22,12 +22,11 @@ find_package(std_msgs REQUIRED)
 # Include directories
 include_directories(include)
 
-
 # Demo Client
-add_executable(trajectory_tracking_client src/trajectory_tracking_client.cpp
-                                          src/TrackCartesianTrajectory.cpp
-                                          src/TrackJointTrajectory.cpp
-                                          src/Utilities.cpp)
+add_executable(trajectory_tracking_client src/nodes/trajectory_tracking_client.cpp
+                                          src/track_cartesian_trajectory.cpp
+                                          src/track_joint_trajectory.cpp
+                                          src/utilities.cpp)
                                           
 ament_target_dependencies(trajectory_tracking_client "action_msgs"
                                                      "ament_cmake"
@@ -35,13 +34,10 @@ ament_target_dependencies(trajectory_tracking_client "action_msgs"
                                                      "rclcpp_action"
                                                      "serial_link_interfaces"
                                                      "std_msgs")
-                                     
+                                                                                                                                       
 # Installation
 install(TARGETS trajectory_tracking_client
         DESTINATION lib/${PROJECT_NAME}
 )
-
-install(DIRECTORY config
-        DESTINATION share/${PROJECT_NAME})
 
 ament_package()
