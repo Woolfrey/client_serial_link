@@ -15,7 +15,9 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include <Utilities.h>
+#include <serial_link_action_client/utilities.hpp>
+
+namespace serial_link_action_client {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                    Load tolerances for joint feedback error from parameter file                //
@@ -255,7 +257,7 @@ load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node)
  //                              Stops the active action server from running                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 bool
-stop_robot(ActionClientInterface *activeClient)
+stop_robot(std::shared_ptr<ActionClientInterface> activeClient)
 {
     if (activeClient == nullptr)
     {
@@ -292,5 +294,7 @@ stop_robot(ActionClientInterface *activeClient)
     }
 
     return true;
+}
+
 }
 

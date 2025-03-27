@@ -18,41 +18,42 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include "TrackCartesianTrajectory.h"
-#include "TrackJointTrajectory.h"
-#include "rclcpp/rclcpp.hpp"                                                                        // ROS2 C++ library
-#include "rclcpp_action/rclcpp_action.hpp"                                                          // ROS2 C++ action library
+#include <rclcpp/rclcpp.hpp>                                                                        // ROS2 C++ library
+#include <rclcpp_action/rclcpp_action.hpp>                                                          // ROS2 C++ action library
+#include <serial_link_action_client/track_cartesian_trajectory.hpp>                                 // Action client class
+#include <serial_link_action_client/track_joint_trajectory.hpp>                                     // Action client class
+#include <serial_link_action_client/utilities.hpp>                                                  // Helper functions
 #include <thread>                                                                                   // Threading (duh!)
-#include "Utilities.h"                                                                              // Useful functions
 
 // These make code easier to read:
-using JointTrajectoryAction     = serial_link_interfaces::action::TrackJointTrajectory;
-using JointTrajectoryPoint      = serial_link_interfaces::msg::JointTrajectoryPoint;
 using CartesianTrajectoryAction = serial_link_interfaces::action::TrackCartesianTrajectory;
 using CartesianTrajectoryPoint  = serial_link_interfaces::msg::CartesianTrajectoryPoint;
+using JointTrajectoryAction     = serial_link_interfaces::action::TrackJointTrajectory;
+using JointTrajectoryPoint      = serial_link_interfaces::msg::JointTrajectoryPoint;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                          MAIN                                                   //
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
-{   
+{  
+    using namespace serial_link_action_client;                                                      // ActionClientInterface, TrackCartesianTrajectory, TrackJointTrajectory
+    
     rclcpp::init(argc, argv);                                                                       // Starts up ROS2
    
     std::shared_ptr<rclcpp::Node> clientNode = rclcpp::Node::make_shared("serial_link_client");     // Create client node
     
-    // Load parameters.
-    // NOTE: First line of YAML file MUST match the node name declared above.
-    
+    // Load parameters using node
     std::map<std::string, std::vector<JointTrajectoryPoint>> jointConfigurations = load_joint_configurations(clientNode);
-    std::map<std::string, std::vector<CartesianTrajectoryPoint>> endpointPoses = load_endpoint_poses(clientNode);
-    std::vector<double> jointTrackingTolerances = load_joint_error_tolerances(clientNode);
-    std::array<double,2> cartesianTrackingTolerance = load_pose_error_tolerances(clientNode);
+    std::map<std::string, std::vector<CartesianTrajectoryPoint>> endpointPoses   = load_endpoint_poses(clientNode);
+    std::vector<double> jointTrackingTolerances                                  = load_joint_error_tolerances(clientNode);
+    std::array<double,2> cartesianTrackingTolerance                              = load_pose_error_tolerances(clientNode);
   
-    // Create the action clients, attach to node
-    TrackJointTrajectory jointTrajectoryClient(clientNode, "track_joint_trajectory", true);
-    TrackCartesianTrajectory cartesianTrajectoryClient(clientNode, "track_cartesian_trajectory", true);  
-    ActionClientInterface *activeClient = nullptr;                                                  // Use this to keep track of which action is running           
-   
+    // Create clients and attach to node
+    auto cartesianTrajectoryClient = std::make_shared<TrackCartesianTrajectory>(clientNode, "track_cartesian_trajectory", true);
+    auto jointTrajectoryClient     = std::make_shared<TrackJointTrajectory>(clientNode, "track_joint_trajectory", true);
+ 
+    std::shared_ptr<ActionClientInterface> activeClient = nullptr;                                  // To keep track of active client
+
     std::thread{[clientNode]() { rclcpp::spin(clientNode); }}.detach();                             // Spin the node in a separate thread so we can continue
   
     while (rclcpp::ok())
@@ -102,9 +103,9 @@ int main(int argc, char **argv)
                 
                 RCLCPP_INFO(clientNode->get_logger(), "Moving to `%s` configuration(s).", commandPrompt.c_str()); // Inform user
 
-                jointTrajectoryClient.send_goal(goal);                                              // Send request to client
+                jointTrajectoryClient->send_goal(goal);                                             // Send request to client
                 
-                activeClient = &jointTrajectoryClient;                                             
+                activeClient = jointTrajectoryClient;                                             
             }
             else
             {
@@ -125,9 +126,9 @@ int main(int argc, char **argv)
                     
                     RCLCPP_INFO(clientNode->get_logger(), "Moving `%s` .", commandPrompt.c_str());  // Inform user
 
-                    cartesianTrajectoryClient.send_goal(goal);                                      // Send request to client
+                    cartesianTrajectoryClient->send_goal(goal);                                     // Send request to client
                     
-                    activeClient = &cartesianTrajectoryClient;                                             
+                    activeClient = cartesianTrajectoryClient;                                             
                 }
                 else
                 {
@@ -136,7 +137,7 @@ int main(int argc, char **argv)
             }
         }
     }
-
+ 
     rclcpp::shutdown();                                                                             // Shut down
 
     return 0;

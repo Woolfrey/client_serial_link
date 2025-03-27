@@ -16,7 +16,9 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include <TrackJointTrajectory.h>
+#include <serial_link_action_client/track_joint_trajectory.hpp>
+
+namespace serial_link_action_client {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                Processes the result of an action                               //                           
@@ -72,4 +74,6 @@ TrackJointTrajectory::result_callback(const typename rclcpp_action::ClientGoalHa
             break;
         }
     }
+}
+
 }

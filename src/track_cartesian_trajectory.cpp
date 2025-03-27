@@ -16,7 +16,9 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include <TrackCartesianTrajectory.h>
+#include <serial_link_action_client/track_cartesian_trajectory.hpp>
+
+namespace serial_link_action_client {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                Processes the result of an action                               //                           
@@ -69,4 +71,6 @@ TrackCartesianTrajectory::result_callback(const typename rclcpp_action::ClientGo
             break;
         }
     }
+}
+
 }
