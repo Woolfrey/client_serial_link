@@ -1,5 +1,5 @@
 /**
- * @file    Utilities.h
+ * @file    utilities.hpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
  * @date    February 2025
@@ -15,12 +15,14 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include "TrackCartesianTrajectory.h"
-#include "TrackJointTrajectory.h"
+#include <serial_link_action_client/track_cartesian_trajectory.hpp>
+#include <serial_link_action_client/track_joint_trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>                                                                        // ROS2 C++ library
 #include <rclcpp_action/rclcpp_action.hpp>                                                          // ROS2 C++ action library
-#include "serial_link_interfaces/msg/joint_trajectory_point.hpp"
-#include "serial_link_interfaces/msg/cartesian_trajectory_point.hpp"
+#include <serial_link_interfaces/msg/joint_trajectory_point.hpp>
+#include <serial_link_interfaces/msg/cartesian_trajectory_point.hpp>
+
+namespace serial_link_action_client {
 
 /**
  * @brief Get the tolerances on joint position error in joint feedback control.
@@ -56,5 +58,6 @@ load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node);
  * @return True if/when successful, false if there was a problem.
  */
 bool
-stop_robot(ActionClientInterface *activeClient);
+stop_robot(std::shared_ptr<ActionClientInterface> activeClient);
 
+}

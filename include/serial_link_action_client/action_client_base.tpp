@@ -1,8 +1,8 @@
 /**
- * @file    ActionClientBase.cpp
+ * @file    action_client_base.tpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    February 2025
+ * @date    March 2025
  * @version 1.0
  * @brief   Provides structure and basic interfaces to all action clients.
  * 
@@ -17,7 +17,9 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include <ActionClientBase.h>
+#include <serial_link_action_client/action_client_base.hpp>
+
+namespace serial_link_action_client {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                           Constructor                                          //
@@ -165,5 +167,7 @@ ActionClientBase<Action>::cancel_callback(const typename rclcpp_action::Client<A
             RCLCPP_INFO(_node->get_logger(), "Cancel succeeded.");
             break;
     }
+}
+
 }
 

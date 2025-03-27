@@ -1,8 +1,8 @@
 /**
- * @file    TrackJointTrajectory.h
+ * @file    track_joint_trajectory.hpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    February 2025
+ * @date    March 2025
  * @version 1.0
  * @brief   An action client for the TrackJointTrajectory action.
  * 
@@ -19,11 +19,13 @@
 #ifndef JOINT_TRAJECTORY_CLIENT_H
 #define JOINT_TRAJECTORY_CLIENT_H
 
-#include "ActionClientBase.h"
-#include "serial_link_interfaces/action/track_joint_trajectory.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <serial_link_action_client/action_client_base.hpp>
+#include <serial_link_interfaces/action/track_joint_trajectory.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-class TrackJointTrajectory : public ActionClientBase<serial_link_interfaces::action::TrackJointTrajectory>
+namespace serial_link_action_client {
+
+class TrackJointTrajectory : public serial_link_action_client::ActionClientBase<serial_link_interfaces::action::TrackJointTrajectory>
 {
     public:
     
@@ -61,5 +63,7 @@ class TrackJointTrajectory : public ActionClientBase<serial_link_interfaces::act
         void
         result_callback(const rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result);
 };
+
+}
 
 #endif

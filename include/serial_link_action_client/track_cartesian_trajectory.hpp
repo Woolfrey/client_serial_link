@@ -1,8 +1,8 @@
 /**
- * @file    TrackCartesianTrajectory.h
+ * @file    track_cartesian_trajectory.hpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    February 2025
+ * @date    March 2025
  * @version 1.0
  * @brief   An action client for the TrackCartesianTrajectory action.
  * 
@@ -19,11 +19,13 @@
 #ifndef CARTESIAN_TRAJECTORY_CLIENT_H
 #define CARTESIAN_TRAJECTORY_CLIENT_H
 
-#include "ActionClientBase.h"
-#include "serial_link_interfaces/action/track_cartesian_trajectory.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <serial_link_action_client/action_client_base.hpp>
+#include <serial_link_interfaces/action/track_cartesian_trajectory.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-class TrackCartesianTrajectory : public ActionClientBase<serial_link_interfaces::action::TrackCartesianTrajectory>
+namespace serial_link_action_client {
+
+class TrackCartesianTrajectory : public serial_link_action_client::ActionClientBase<serial_link_interfaces::action::TrackCartesianTrajectory>
 {
     public:
     
@@ -61,6 +63,8 @@ class TrackCartesianTrajectory : public ActionClientBase<serial_link_interfaces:
         void
         result_callback(const rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result);   
 };
+
+}
 
 #endif
 

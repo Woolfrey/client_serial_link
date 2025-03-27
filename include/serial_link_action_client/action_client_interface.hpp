@@ -1,5 +1,5 @@
 /**
- * @file    ActionClientInterface.h
+ * @file    action_client_interface.hpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
  * @date    February 2025
@@ -22,6 +22,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+
+namespace serial_link_action_client {
 
 /**
  * @brief A class that provides basic interfaces to all actions clients.
@@ -71,5 +73,7 @@ class ActionClientInterface
         bool
         is_running() const = 0;
 };                                                                                                  // Semicolon required after class declaration
+
+}
 
 #endif

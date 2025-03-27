@@ -1,8 +1,8 @@
 /**
- * @file    ActionClientBase.h
+ * @file    action_client_base.hpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    February 2025
+ * @date    March 2025
  * @version 1.0
  * @brief   Provides structure and basic interfaces to all action clients.
  * 
@@ -20,16 +20,18 @@
 #ifndef ACTION_CLIENT_BASE_H
 #define ACTION_CLIENT_BASE_H
 
-#include <ActionClientInterface.h>
+#include <serial_link_action_client/action_client_interface.hpp>
 #include <memory>
 #include <string>
 #include <action_msgs/srv/cancel_goal.hpp>
+
+namespace serial_link_action_client {
 
 /**
  * @brief Provides structure for and basic interfaces to all action clients.
  */
 template <class Action>
-class ActionClientBase : public ActionClientInterface
+class ActionClientBase : public serial_link_action_client::ActionClientInterface
 {
     public:
         
@@ -127,6 +129,8 @@ class ActionClientBase : public ActionClientInterface
         cancel_callback(const typename rclcpp_action::Client<Action>::CancelResponse::SharedPtr response);
 };
 
-#include <ActionClientBase.tpp>
+}
+
+#include <serial_link_action_client/action_client_base.tpp>
 
 #endif
