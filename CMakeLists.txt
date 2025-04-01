@@ -9,6 +9,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+####################################################################################################
+#                                       List build dependencies                                    #
+####################################################################################################
+
 # ROS2 packages
 find_package(action_msgs REQUIRED)
 find_package(ament_cmake REQUIRED)
@@ -19,10 +23,14 @@ find_package(sensor_msgs REQUIRED)
 find_package(serial_link_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 
-# Include directories
+# Location of header files:
 include_directories(include)
 
-# Demo Client
+####################################################################################################
+#                                            Executables                                           #
+####################################################################################################
+
+# Trajectory tracking
 add_executable(trajectory_tracking_client src/nodes/trajectory_tracking_client.cpp
                                           src/track_cartesian_trajectory.cpp
                                           src/track_joint_trajectory.cpp
@@ -34,9 +42,25 @@ ament_target_dependencies(trajectory_tracking_client "action_msgs"
                                                      "rclcpp_action"
                                                      "serial_link_interfaces"
                                                      "std_msgs")
-                                                                                                                                       
-# Installation
-install(TARGETS trajectory_tracking_client
+# Follow twist
+add_executable(follow_twist_client src/nodes/follow_twist_client.cpp
+                                   src/follow_twist.cpp
+                                   src/track_joint_trajectory.cpp
+                                   src/utilities.cpp)
+                                          
+ament_target_dependencies(follow_twist_client "action_msgs"
+                                              "ament_cmake"
+                                              "rclcpp"
+                                              "rclcpp_action"
+                                              "serial_link_interfaces"
+                                              "std_msgs")
+
+####################################################################################################
+#                                 Install files so ROS2 can find them                              #
+####################################################################################################
+
+install(TARGETS follow_twist_client
+                trajectory_tracking_client
         DESTINATION lib/${PROJECT_NAME}
 )
 
