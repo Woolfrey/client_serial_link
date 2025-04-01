@@ -38,18 +38,7 @@ class TrackCartesianTrajectory : public serial_link_action_client::ActionClientB
          */
         TrackCartesianTrajectory(std::shared_ptr<rclcpp::Node> clientNode,
                                   const std::string &actionName,
-                                  bool verbose = false)
-                                : ActionClientBase(clientNode, actionName),
-                                  _verbose(verbose)
-        {
-            // Override the result callback in the base class
-            _options.result_callback = std::bind
-            (
-                &TrackCartesianTrajectory::result_callback,                                         // Name of the method
-                this,                                                                               // Attach this node
-                std::placeholders::_1                                                               // I don't know what this does
-            );
-        }
+                                  bool verbose = false);
                                   
     private:
        
