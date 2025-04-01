@@ -44,13 +44,8 @@ load_joint_error_tolerances(const std::shared_ptr<rclcpp::Node> &node)
 std::array<double,2>
 load_pose_error_tolerances(const std::shared_ptr<rclcpp::Node> &node)
 {
-    std::string nodeName = node->get_name();
-    
-    node->declare_parameter("pose_error_tolerance.position", 0.1);
-    node->declare_parameter("pose_error_tolernace.orientation", 0.05);
-    
-    double position = node->get_parameter("pose_error_tolerance.position").as_double();
-    double orientation = node->get_parameter("pose_error_tolernace.orientation").as_double();
+    double position    = node->declare_parameter("pose_error_tolerance.position", 0.1);
+    double orientation = node->declare_parameter("pose_error_tolerance.orientation", 0.05);
     
     return {position, orientation};
 }
@@ -102,8 +97,8 @@ load_joint_configurations(const std::shared_ptr<rclcpp::Node> &node)
         node->declare_parameter(name+".positions", std::vector<double>{});
         node->declare_parameter(name+".times", std::vector<double>{});
         
-        if(!node->has_parameter(name+".positions")
-        or !node->has_parameter(name+".times"))
+        if (not node->has_parameter(name+".positions")
+        or  not node->has_parameter(name+".times"))
         {
             throw std::invalid_argument("No 'positions' and/or 'times' associated with the '" + name + "' joint configuration.");
         }
@@ -119,7 +114,7 @@ load_joint_configurations(const std::shared_ptr<rclcpp::Node> &node)
         }
             
         // Ensure number of waypoints matches number of times
-        if(positions.size()/numJoints != times.size())
+        if (positions.size()/numJoints != times.size())
         {
             throw std::invalid_argument("Number of waypoints (" + std::to_string(positions.size()) + " "
                                         "does not match the number of times (" + std::to_string(times.size()) + ").");
@@ -165,7 +160,7 @@ load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node)
     node->declare_parameter("pose_names", std::vector<std::string>{});                              // Need to declare before we can get
             
     // Get a list of names
-    if(not node->has_parameter("pose_names"))
+    if (not node->has_parameter("pose_names"))
     {
         throw std::invalid_argument("Could not find 'pose_names' parameters for the '" + nodeName + "' node. "
                                     "Does the name in the YAML file match the node name?");
@@ -174,16 +169,16 @@ load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node)
     {
         node->get_parameter("pose_names", poseNames);                                               // Now get them
         
-        for(const auto &name : poseNames)
+        for (const auto &name : poseNames)
         {
             // Declare in advance
             node->declare_parameter(name+".poses", std::vector<double>{});
             node->declare_parameter(name+".times", std::vector<double>{});
             node->declare_parameter(name+".reference", "");
             
-            if (!node->has_parameter(name+".poses")
-            or  !node->has_parameter(name+".times")
-            or  !node->has_parameter(name+".reference"))
+            if (not node->has_parameter(name+".poses")
+            or  not node->has_parameter(name+".times")
+            or  not node->has_parameter(name+".reference"))
             {
                 throw std::invalid_argument("Could not find 'poses', 'times', and/or 'reference' "
                                             "for the '" + name + "' field.");
@@ -195,14 +190,14 @@ load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node)
             std::string reference = node->get_parameter(name+".reference").as_string();
             
             // Ensure there are 6 elements for pose (3 for position, 3 for orientation)
-            if(poses.size() % 6 != 0)
+            if (poses.size() % 6 != 0)
             {
                 throw std::invalid_argument("Size of pose array (" + std::to_string(poses.size()) + ") "
                                             "for '" + name + "' not divisible by 6.");
             }
             
             // Ensure the number of waypoints matches the number of times
-            if(poses.size()/6 != times.size())
+            if (poses.size()/6 != times.size())
             {
                 throw std::invalid_argument("Number of waypoints (" + std::to_string(poses.size()/6) + ") "
                                             "does not match the number of times (" + std::to_string(times.size()) + ").");
