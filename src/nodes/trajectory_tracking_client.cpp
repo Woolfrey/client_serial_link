@@ -42,11 +42,14 @@ int main(int argc, char **argv)
    
     std::shared_ptr<rclcpp::Node> clientNode = rclcpp::Node::make_shared("serial_link_client");     // Create client node
     
-    // Load parameters using node
+    // Load trajectory waypoints and put them in a dictionary
     std::map<std::string, std::vector<JointTrajectoryPoint>> jointConfigurations = load_joint_configurations(clientNode);
     std::map<std::string, std::vector<CartesianTrajectoryPoint>> endpointPoses   = load_endpoint_poses(clientNode);
-    std::vector<double> jointTrackingTolerances                                  = load_joint_error_tolerances(clientNode);
-    std::array<double,2> cartesianTrackingTolerance                              = load_pose_error_tolerances(clientNode);
+
+    // Load tolerances on trajectory tracking
+    double positionErrorTolerance = clientNode->declare_parameter("tolerance.pose.position", 0.05);
+    double orientationErrorTolerance = clientNode->declare_parameter("tolerance.pose.orientation", 0.01);
+    std::vector<double> jointErrorTolerances = clientNode->declare_parameter<std::vector<double>>("tolerance.joint", {0.0});
   
     // Create clients and attach to node
     auto cartesianTrajectoryClient = std::make_shared<TrackCartesianTrajectory>(clientNode, "track_cartesian_trajectory", true);
@@ -98,8 +101,8 @@ int main(int argc, char **argv)
                 
                 auto goal = std::make_shared<JointTrajectoryAction::Goal>();                        // Generate goal object
                 
-                goal->points = iterator->second;                                                    // Attach the joint trajectory
-                goal->tolerances = jointTrackingTolerances;
+                goal->points     = iterator->second;                                                // Attach the joint trajectory
+                goal->tolerances = jointErrorTolerances;
                 
                 RCLCPP_INFO(clientNode->get_logger(), "Moving to `%s` configuration(s).", commandPrompt.c_str()); // Inform user
 
@@ -121,8 +124,8 @@ int main(int argc, char **argv)
                     auto goal = std::make_shared<CartesianTrajectoryAction::Goal>();                // Generate goal object
                     
                     goal->points = iterator->second;                                                // Attach the joint trajectory
-                    goal->position_tolerance = cartesianTrackingTolerance[0];
-                    goal->orientation_tolerance = cartesianTrackingTolerance[1];
+                    goal->position_tolerance = positionErrorTolerance;
+                    goal->orientation_tolerance = orientationErrorTolerance;
                     
                     RCLCPP_INFO(clientNode->get_logger(), "Moving `%s` .", commandPrompt.c_str());  // Inform user
 
