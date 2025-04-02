@@ -42,6 +42,20 @@ ament_target_dependencies(trajectory_tracking_client "action_msgs"
                                                      "rclcpp_action"
                                                      "serial_link_interfaces"
                                                      "std_msgs")
+                                                     
+# Follow transform
+add_executable(follow_transform_client src/nodes/follow_transform_client.cpp
+                                       src/follow_transform.cpp
+                                       src/track_joint_trajectory.cpp
+                                       src/utilities.cpp)
+                                          
+ament_target_dependencies(follow_transform_client "action_msgs"
+                                                  "ament_cmake"
+                                                  "rclcpp"
+                                                  "rclcpp_action"
+                                                  "serial_link_interfaces"
+                                                  "std_msgs")
+                                              
 # Follow twist
 add_executable(follow_twist_client src/nodes/follow_twist_client.cpp
                                    src/follow_twist.cpp
@@ -54,12 +68,15 @@ ament_target_dependencies(follow_twist_client "action_msgs"
                                               "rclcpp_action"
                                               "serial_link_interfaces"
                                               "std_msgs")
+                                              
+                                              
 
 ####################################################################################################
 #                                 Install files so ROS2 can find them                              #
 ####################################################################################################
 
-install(TARGETS follow_twist_client
+install(TARGETS follow_transform_client
+                follow_twist_client
                 trajectory_tracking_client
         DESTINATION lib/${PROJECT_NAME}
 )
