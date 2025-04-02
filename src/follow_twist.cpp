@@ -43,19 +43,7 @@ FollowTwist::FollowTwist(std::shared_ptr<rclcpp::Node> clientNode,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void
 FollowTwist::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result)
-{
-    std::string performanceResults =
-    "Linear velocity error (m/s) :\n"
-    "   - Mean:      " + std::to_string(result.result->linear_error.mean) + "\n"
-    "   - Std. dev.: " + std::to_string(sqrt(result.result->linear_error.variance)) + "\n"
-    "   - Min:       " + std::to_string(result.result->linear_error.min) + "\n"
-    "   - Max:       " + std::to_string(result.result->linear_error.max) + "\n"
-    "Angular velocity error (rpm) :\n"
-    "   - Mean:      " + std::to_string(result.result->angular_error.mean*60/(2*M_PI)) + "\n"
-    "   - Std. dev.: " + std::to_string(sqrt(result.result->angular_error.variance)*60/(2*M_PI)) + "\n"
-    "   - Min:       " + std::to_string(result.result->angular_error.min*60/(2*M_PI)) + "\n"
-    "   - Max:       " + std::to_string(result.result->angular_error.max*60/(2*M_PI));  
-                
+{                
     switch (result.code)
     {
         case rclcpp_action::ResultCode::SUCCEEDED:
@@ -69,6 +57,18 @@ FollowTwist::result_callback(const typename rclcpp_action::ClientGoalHandle<Acti
         {
             if(_verbose)
             {
+                std::string performanceResults =
+                "Linear velocity error (m/s) :\n"
+                "   - Mean:      " + std::to_string(result.result->linear_error.mean) + "\n"
+                "   - Std. dev.: " + std::to_string(sqrt(result.result->linear_error.variance)) + "\n"
+                "   - Min:       " + std::to_string(result.result->linear_error.min) + "\n"
+                "   - Max:       " + std::to_string(result.result->linear_error.max) + "\n"
+                "Angular velocity error (rpm) :\n"
+                "   - Mean:      " + std::to_string(result.result->angular_error.mean*60/(2*M_PI)) + "\n"
+                "   - Std. dev.: " + std::to_string(sqrt(result.result->angular_error.variance)*60/(2*M_PI)) + "\n"
+                "   - Min:       " + std::to_string(result.result->angular_error.min*60/(2*M_PI)) + "\n"
+                "   - Max:       " + std::to_string(result.result->angular_error.max*60/(2*M_PI));
+                
                 RCLCPP_INFO(_node->get_logger(), "Follow twist action ended.\n%s", performanceResults.c_str());
             }
             else
@@ -79,14 +79,7 @@ FollowTwist::result_callback(const typename rclcpp_action::ClientGoalHandle<Acti
         }
         case rclcpp_action::ResultCode::ABORTED:
         {
-            if(_verbose)
-            {
-                RCLCPP_INFO(_node->get_logger(), "Follow twist action aborted: %s,\n%s", result.result->message.c_str(), performanceResults.c_str());
-            }
-            else
-            {
-                RCLCPP_INFO(_node->get_logger(), "Follow twist tracking was aborted: %s", result.result->message.c_str());
-            }
+            RCLCPP_INFO(_node->get_logger(), "Follow twist tracking was aborted: %s", result.result->message.c_str());
             break;
         }
         default:
