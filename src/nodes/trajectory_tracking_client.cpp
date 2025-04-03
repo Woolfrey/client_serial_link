@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
     // Load tolerances on trajectory tracking
     double positionErrorTolerance = clientNode->declare_parameter("tolerance.pose.position", 0.05);
-    double orientationErrorTolerance = clientNode->declare_parameter("tolerance.pose.orientation", 0.01);
+    double orientationErrorTolerance = clientNode->declare_parameter("tolerance.pose.orientation", 0.1);
     std::vector<double> jointErrorTolerances = clientNode->declare_parameter<std::vector<double>>("tolerance.joint", {0.0});
   
     // Create clients and attach to node

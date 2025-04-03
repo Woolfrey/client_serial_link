@@ -44,8 +44,8 @@ int main(int argc, char **argv)
     std::map<std::string, std::vector<JointTrajectoryPoint>> jointConfigurations = load_joint_configurations(clientNode);
 
     // Load parameters
-    double positionTolerance = clientNode->declare_parameter("tolerance.pose.position",  0.1);
-    double orientationTolerance = clientNode->declare_parameter("tolerance.pose.orientation", 0.05);
+    double positionTolerance = clientNode->declare_parameter("tolerance.pose.position",  0.2);
+    double orientationTolerance = clientNode->declare_parameter("tolerance.pose.orientation", 0.5);
     double timeout = clientNode->declare_parameter("tolerance.timeout", 0.10);
     std::vector<double> jointTrackingTolerances = clientNode->declare_parameter<std::vector<double>>("tolerance.joint", {0.0});
     std::string frameID = clientNode->declare_parameter("frame_id", "desired");
