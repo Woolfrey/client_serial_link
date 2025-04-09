@@ -178,6 +178,10 @@ ros2 run serial_link_action_client follow_transform_client --ros-args --params-f
     <img src="doc/follow_transform_client.png" width="500" height="auto">
 </p>
 
+<p align="center">
+    <img src="doc/follow_transform.gif" width="600" height="auto">
+</p>
+
 ### Follow Twist Client
 
 This client loads the `TrackJointTrajectory` and `FollowTwist` clients. You use the former to move the robot in to a pre-defined joint configuration. Then the latter is used to subscribe to a `geometry_msgs::msg::TwistStamped` that is somehow being published over the ROS2 network. The server is supposed to control the endpoint of the robot arm to follow this twist command in real time.
@@ -189,6 +193,10 @@ ros2 run serial_link_action_client follow_twist_client --ros-args --params-file 
 
 <p align="center">
     <img src="doc/follow_twist_client.png" width="600" height="auto">
+</p>
+
+<p align="center">
+    <img src="doc/follow_twist.gif" width="600" height="auto">
 </p>
 
 ### Track Trajectory Client
@@ -204,6 +212,10 @@ ros2 run serial_link_action_client --ros-args --params-file "$config/endpoint_po
 
 <p align="center">
     <img src="doc/track_trajectory_client.png" width="350" height="auto">
+</p>
+
+<p align="center">
+    <img src="doc/track_trajectory.gif" width="600" height="auto">
 </p>
 
 [:top: Back to Top.](#incoming_envelope-serial-link-action-client)
