@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2025-04-09T10:31:08.212Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.2 Chrome/114.0.5735.289 Electron/25.9.4 Safari/537.36" etag="syuqbfekJOgaWLG3wh6v" version="22.1.2" type="device" pages="4">
+<mxfile host="Electron" modified="2025-04-09T10:47:16.396Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.2 Chrome/114.0.5735.289 Electron/25.9.4 Safari/537.36" etag="X65Y7ccwnuQRuMcMVrJO" version="22.1.2" type="device" pages="4">
   <diagram id="UVMW1Py2pPLkODg0h_UD" name="Class Diagrams">
     <mxGraphModel dx="931" dy="593" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
@@ -326,7 +326,7 @@
             <mxPoint y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="tPBkjizKqbT2hHdO0x0o-1" value="FollowJointTrajectory&lt;br&gt;Server" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="1">
+        <mxCell id="tPBkjizKqbT2hHdO0x0o-1" value="TrackJointTrajectory&lt;br&gt;Server" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="1">
           <mxGeometry x="390" y="250" width="165" height="40" as="geometry" />
         </mxCell>
         <mxCell id="tPBkjizKqbT2hHdO0x0o-6" value="tf2_ros::Transform" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="1">
@@ -438,7 +438,7 @@
             <mxPoint y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="Db8V2dtDOuIOnSIOVaZt-30" value="FollowJointTrajectory&lt;br&gt;Server" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="Db8V2dtDOuIOnSIOVaZt-1">
+        <mxCell id="Db8V2dtDOuIOnSIOVaZt-30" value="TrackJointTrajectory&lt;br&gt;Server" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="Db8V2dtDOuIOnSIOVaZt-1">
           <mxGeometry x="510" y="250" width="165" height="40" as="geometry" />
         </mxCell>
         <mxCell id="Db8V2dtDOuIOnSIOVaZt-31" value="geometry_msgs::msg::TwistStamped" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="Db8V2dtDOuIOnSIOVaZt-1">
@@ -539,7 +539,7 @@
             <mxPoint y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="YMO9erzabtcfNjYtuy-r-30" value="FollowJointTrajectory&lt;br&gt;Server" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="YMO9erzabtcfNjYtuy-r-1">
+        <mxCell id="YMO9erzabtcfNjYtuy-r-30" value="TrackJointTrajectory&lt;br&gt;Server" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="YMO9erzabtcfNjYtuy-r-1">
           <mxGeometry x="510" y="250" width="165" height="40" as="geometry" />
         </mxCell>
       </root>
