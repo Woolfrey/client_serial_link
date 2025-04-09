@@ -1,6 +1,6 @@
 # :incoming_envelope: Serial Link Action Client
 
-This package contains [ROS2 action servers](https://design.ros2.org/articles/actions.html) designed to interact with the [serial_link_action_client](http://github.com/Woolfrey/server_serial_link) package. The action and message definitions are defined in the [serial_link_interfaces](https://github.com/Woolfrey/interface_serial_link) package. It is primarily an example of how to write a client and use the action server(s) to control a robot. You may use them as is, modify them to suit your needs, or write your own from scratch.
+This package contains [ROS2 action clients](https://design.ros2.org/articles/actions.html) designed to interact with the [serial_link_action_server](http://github.com/Woolfrey/server_serial_link) package. The action and message definitions are defined in the [serial_link_interfaces](https://github.com/Woolfrey/interface_serial_link) package. It is primarily an example of how to write a client and use the action server(s) to control a robot. You may use them as is, modify them to suit your needs, or write your own from scratch.
 
 #### :sparkles: Features:
 - Seemless interaction with the [serial link action client](https://github.com/Woolfrey/client_serial_link) package,
