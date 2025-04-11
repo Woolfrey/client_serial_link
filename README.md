@@ -198,7 +198,7 @@ This client has both the `TrackJointTrajectory` and `TrackCartesianTrajectory` a
 
 To run, use something like:
 ```
-ros2 run serial_link_action_client --ros-args --params-file "$config/endpoint_poses.yaml" --params-file "config/joint_configurations.yaml" --params-file "config/tolerances.yaml"
+ros2 run serial_link_action_client trajectory_tracking_client --ros-args --params-file "$config/endpoint_poses.yaml" --params-file "config/joint_configurations.yaml" --params-file "config/tolerances.yaml"
 ```
 (Note the extra `endpoint_poses.yaml` argument compared to the previous two).
 
