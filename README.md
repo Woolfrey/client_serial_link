@@ -16,7 +16,6 @@ This package contains [ROS2 action clients](https://design.ros2.org/articles/act
 - [Installation](#floppy_disk-installation)
 - [Classes](#card_file_box-classes)
 - [Nodes](#satellite-nodes)
-- [Release Notes](#package-release-notes---v100-april-2025)
 - [Contributing](#handshake-contributing)
 - [Citing this Repository](#bookmark_tabs-citing-this-repository)
 - [License](#scroll-license)
@@ -41,13 +40,6 @@ ros2_workspace/
 ├── log/
 └── src/
     ├── client_serial_link/
-    |   ├── doc/
-    |   ├── include/
-    |   ├── src/
-    |   ├── CMakeLists.txt
-    |   ├── LICENSE
-    |   ├── package.xml
-    |   └── README.md
     ├── interface_serial_link/
     └── server_serial_link/ (optional)
 ```
@@ -91,7 +83,7 @@ If you scroll down the list, you should see both `serial_link_action_client`, an
 This package contains several classes that implement the action clients for actions defined in [interface repository](https://github.com/Woolfrey/interface_serial_link). 
 
 <p align="center">
-    <img src="doc/diagram.png" width="700" height="auto"/>
+    <img src="doc/client_overview.png" width="700" height="auto"/>
 </p>
 
 - The `ActionClientInterface` provides polymorphism for interacting with actions of different types.
@@ -176,7 +168,7 @@ ros2 run serial_link_action_client follow_transform_client --ros-args --params-f
 ```
 
 <p align="center">
-    <img src="doc/follow_transform_client.png" width="500" height="auto">
+    <img src="doc/follow_transform.png" width="500" height="auto">
 </p>
 
 <p align="center">
@@ -193,7 +185,7 @@ ros2 run serial_link_action_client follow_twist_client --ros-args --params-file 
 ```
 
 <p align="center">
-    <img src="doc/follow_twist_client.png" width="600" height="auto">
+    <img src="doc/follow_twist.png" width="600" height="auto">
 </p>
 
 <p align="center">
@@ -212,32 +204,13 @@ ros2 run serial_link_action_client trajectory_tracking_client --ros-args --param
 
 
 <p align="center">
-    <img src="doc/track_trajectory_client.png" width="350" height="auto">
+    <img src="doc/track_trajectory.png" width="350" height="auto">
 </p>
 
 <p align="center">
     <img src="doc/track_trajectory.gif" width="600" height="auto">
 </p>
 
-[:top: Back to Top.](#incoming_envelope-serial-link-action-client)
-
-## :package: Release Notes - v1.0.0 (April 2025)
-
-### :tada: First Release:
-
-**Classes:**
-- ActionClientInterface
-- ActionClientBase (templated)
-- FollowTransform
-- FollowTwist
-- TrackCartesianTrajectory
-- TrackJointTrajectory
-
-**Nodes:**
-- follow_transform_client
-- follow_twist_client
-- track_trajectory_client
- 
 [:top: Back to Top.](#incoming_envelope-serial-link-action-client)
 
 ## :handshake: Contributing
