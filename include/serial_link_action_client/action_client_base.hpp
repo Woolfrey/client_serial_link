@@ -2,8 +2,8 @@
  * @file    action_client_base.hpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    March 2025
- * @version 1.0
+ * @date    July 2025
+ * @version 1.1
  * @brief   Provides structure and basic interfaces to all action clients.
  * 
  * @details This class elaborates on the fundamental methods required for sending goals & receiving
@@ -28,7 +28,7 @@
 namespace serial_link_action_client {
 
 /**
- * @brief Provides structure for and basic interfaces to all action clients.
+ * @brief Provides structure for all action clients.
  */
 template <class Action>
 class ActionClientBase : public serial_link_action_client::ActionClientInterface
@@ -48,10 +48,12 @@ class ActionClientBase : public serial_link_action_client::ActionClientInterface
         /**
          * @brief Sends a goal to the server to perform a given action.
          * @param goal The goal field of the action to be sent to the server.
+         * @param timeout Optional time to wait before canceling.
          * @return Returns true of the goal is accepted, false if not.
          */
         bool
-        send_goal(const typename Action::Goal::SharedPtr &goal);
+        send_goal(const typename Action::Goal::SharedPtr &goal,
+                  std::chrono::milliseconds timeout = std::chrono::seconds(30));
 
         /**
          * @brief Asks the action to cancel.
@@ -73,32 +75,34 @@ class ActionClientBase : public serial_link_action_client::ActionClientInterface
          * @see https://docs.ros2.org/foxy/api/action_msgs/msg/GoalStatus.html
          */
         int8_t
-        status() const override
-        {
-            if(_goalHandle) return _goalHandle->get_status();
-            else            return 0;
-        }
+        status() const override;
         
         /**
          * @brief Checks to see if an action is currently active.
          * @return True if accepted (about to start), currently executing, or in the process of canceling.
          */
         bool
-        is_running() const override
-        {
-            if(status() == 1    
-            or status() == 2
-            or status() == 3)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
+        is_running() const override;
+        
+        /**
+         * @brief Sets the action to be executed after this one is completes successfully.
+         * @nextAction A lambda function.
+         */
+        void
+        set_next_action(std::function<void()> nextAction);
+        
+        /**
+         * @brief Set the action that is executed if this one is aborted.
+         * @abortAction A lambda function.
+         */
+        void
+        set_abort_action(std::function<void()> abortAction);
  
     protected:
+        
+        std::function<void()> _abortAction;                                                         // What the robot should do if the action is aborted
+        
+        std::function<void()> _nextAction;                                                          // Optional follow-up action
         
         std::shared_ptr<rclcpp::Node> _node;                                                        ///< Pointer to client node.
         
@@ -107,20 +111,20 @@ class ActionClientBase : public serial_link_action_client::ActionClientInterface
         typename rclcpp_action::Client<Action>::SharedPtr _actionClient;                            ///< This is the foundation of the class
 
         typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr _goalHandle;                    ///< Current goal handle
-          
+        
         /**
          * @brief This method executes after sending a goal, and receiving the response from the server.
          * @param GoalHandle A pointer to the goal handle associated with the action.
          */
         void
-        handle_response(const typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr goalHandle);
+        goal_response_callback(const typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr goalHandle);
         
         /**
          * This method executes when an action is finished and the server returns the result.
          * @param result The result portion of the associated goal field.
          */
         void
-        handle_result(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result);
+        result_callback(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result);
             
         /**
          * This method executes after an action server has completed the cancellation process.

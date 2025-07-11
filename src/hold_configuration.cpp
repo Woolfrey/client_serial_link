@@ -1,13 +1,10 @@
 /**
- * @file    TrackJointTrajectory.cpp
+ * @file    hold_configuration.cpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    February 2025
+ * @date    July 2025
  * @version 1.0
- * @brief   An action client for the TrackJointTrajectory action.
- * 
- * @details This class acts as the client implementation of the TrackJointTrajectory action
- *          defined in the serial_link_interfaces package.
+ * @brief   Source code for the HoldConfiguration action client class.
  * 
  * @copyright Copyright (c) 2025 Jon Woolfrey
  * 
@@ -16,46 +13,44 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include <serial_link_action_client/track_joint_trajectory.hpp>
+#include <serial_link_action_client/hold_configuration.hpp>
 
 namespace serial_link_action_client {
 
-
   ////////////////////////////////////////////////////////////////////////////////////////////////////
- //                                           Constructor                                          //                           
+ //                                          Constructor                                           //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-TrackJointTrajectory::TrackJointTrajectory(std::shared_ptr<rclcpp::Node> clientNode,
-                                           const std::string &actionName,
-                                           bool verbose)
+HoldConfiguration::HoldConfiguration(std::shared_ptr<rclcpp::Node> clientNode,
+                                     const std::string &actionName,
+                                     bool verbose)
 : ActionClientBase(clientNode, actionName),
   _verbose(verbose)
 {
     // Override the result callback in the base class
     _options.result_callback = std::bind
     (
-        &TrackJointTrajectory::result_callback,                                                     // Name of the method
-        this,                                                                                       // Attach this node
-        std::placeholders::_1                                                                       // I don't know what this does
+        &HoldConfiguration::result_callback,                                                // Name of the method
+        this,                                                                               // Attach this node
+        std::placeholders::_1                                                               // I don't know what this does
     );
 }
-        
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                Processes the result of an action                               //                           
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-TrackJointTrajectory::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result)
+HoldConfiguration::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result)
 {
     switch (result.code)
     {
         case rclcpp_action::ResultCode::SUCCEEDED:
         {
-            // Follow up with next action
-            if (_nextAction)
-            {
-                _nextAction();
-                _nextAction = nullptr;
-            }
-            
+            RCLCPP_INFO(_node->get_logger(),
+                        "This case should never be called. How did that happen??? (ー_ーゞ");                         
+            break;
+        }
+        case rclcpp_action::ResultCode::CANCELED:
+        {
             if(_verbose)
             {
                 std::string performanceResults = "";
@@ -74,24 +69,15 @@ TrackJointTrajectory::result_callback(const typename rclcpp_action::ClientGoalHa
                 }
                 
                 RCLCPP_INFO(_node->get_logger(),
-                            "Joint trajectory tracking complete. Position error:\n%s",
+                            "Hold configuration action cancelled. Position error:\n%s",
                             performanceResults.c_str());
-            }
-            else
-            {
-                RCLCPP_INFO(_node->get_logger(), "Joint trajectory tracking complete.");
             }
             
             break;
         }
-        case rclcpp_action::ResultCode::CANCELED:
-        {
-            RCLCPP_INFO(_node->get_logger(), "Joint trajectory tracking was canceled.");
-            break;
-        }
         case rclcpp_action::ResultCode::ABORTED:
         {
-            RCLCPP_INFO(_node->get_logger(), "Joint trajectory tracking was aborted: %s", result.result->message.c_str());
+            RCLCPP_INFO(_node->get_logger(), "Hold configuration action was aborted: %s", result.result->message.c_str());
             break;
         }
         default:

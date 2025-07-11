@@ -1,13 +1,11 @@
 /**
- * @file    TrackCartesianTrajectory.cpp
+ * @file    hold_pose.cpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    February 2025
+ * @date    July 2025
  * @version 1.0
- * @brief   An action client for the TrackCartesianTrajectory action.
+ * @brief   Source files for the HoldPose action client class.
  * 
- * @details This class acts as the client implementation of the TrackCartesianTrajectory action
- *          defined in the serial_link_interfaces package.
  * 
  * @copyright Copyright (c) 2025 Jon Woolfrey
  * 
@@ -16,23 +14,23 @@
  * @see https://docs.ros.org/en/humble/index.html for ROS 2 documentation.
  */
 
-#include <serial_link_action_client/track_cartesian_trajectory.hpp>
+#include <serial_link_action_client/hold_pose.hpp>
 
 namespace serial_link_action_client {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                          Constructor                                           //                           
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-TrackCartesianTrajectory::TrackCartesianTrajectory(std::shared_ptr<rclcpp::Node> clientNode,
-                          const std::string &actionName,
-                          bool verbose)
+HoldPose::HoldPose(std::shared_ptr<rclcpp::Node> clientNode,
+                   const std::string &actionName,
+                   bool verbose)
 : ActionClientBase(clientNode, actionName),
   _verbose(verbose)
 {
     // Override the result callback in the base class
     _options.result_callback = std::bind
     (
-        &TrackCartesianTrajectory::result_callback,                                                 // Name of the method
+        &HoldPose::result_callback,                                                                 // Name of the method
         this,                                                                                       // Attach this node
         std::placeholders::_1                                                                       // I don't know what this does
     );
@@ -42,11 +40,17 @@ TrackCartesianTrajectory::TrackCartesianTrajectory(std::shared_ptr<rclcpp::Node>
  //                                Processes the result of an action                               //                           
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-TrackCartesianTrajectory::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result)
+HoldPose::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result)
 {
     switch (result.code)
     {
         case rclcpp_action::ResultCode::SUCCEEDED:
+        {
+            RCLCPP_WARN(_node->get_logger(),
+                        "This case should never be called. How did that happen? (ー_ーゞ");
+            break;
+        }
+        case rclcpp_action::ResultCode::CANCELED:
         {
             if(_verbose)
             {
@@ -63,31 +67,16 @@ TrackCartesianTrajectory::result_callback(const typename rclcpp_action::ClientGo
                 "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI);            
      
                 RCLCPP_INFO(_node->get_logger(),
-                            "Cartesian trajectory tracking complete.\n%s",
+                            "Hold pose action was cancelled..\n%s",
                             performanceResults.c_str());
             }
-            else
-            {
-                RCLCPP_INFO(_node->get_logger(), "Cartesian trajectory tracking complete.");
-            }
-            
-            // Follow up with next action
-            if (_nextAction)
-            {
-                _nextAction();
-                _nextAction = nullptr;
-            }
-            
-            break;
-        }
-        case rclcpp_action::ResultCode::CANCELED:
-        {
-            RCLCPP_INFO(_node->get_logger(), "Cartesian trajectory tracking was canceled.");
+            RCLCPP_INFO(_node->get_logger(), "Hold pose action was canceled.");
+
             break;
         }
         case rclcpp_action::ResultCode::ABORTED:
         {
-            RCLCPP_INFO(_node->get_logger(), "Cartesian trajectory tracking was aborted: %s", result.result->message.c_str());
+            RCLCPP_INFO(_node->get_logger(), "Hold pose action was aborted: %s", result.result->message.c_str());
             break;
         }
         default:

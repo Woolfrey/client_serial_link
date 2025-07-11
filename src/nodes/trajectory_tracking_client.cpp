@@ -20,6 +20,8 @@
 
 #include <rclcpp/rclcpp.hpp>                                                                        // ROS2 C++ library
 #include <rclcpp_action/rclcpp_action.hpp>                                                          // ROS2 C++ action library
+#include <serial_link_action_client/hold_configuration.hpp>
+#include <serial_link_action_client/hold_pose.hpp>
 #include <serial_link_action_client/track_cartesian_trajectory.hpp>                                 // Action client class
 #include <serial_link_action_client/track_joint_trajectory.hpp>                                     // Action client class
 #include <serial_link_action_client/utilities.hpp>                                                  // Helper functions
@@ -28,6 +30,8 @@
 // These make code easier to read:
 using CartesianTrajectoryAction = serial_link_interfaces::action::TrackCartesianTrajectory;
 using CartesianTrajectoryPoint  = serial_link_interfaces::msg::CartesianTrajectoryPoint;
+using HoldConfigurationAction   = serial_link_interfaces::action::HoldConfiguration;
+using HoldPoseAction            = serial_link_interfaces::action::HoldPose;
 using JointTrajectoryAction     = serial_link_interfaces::action::TrackJointTrajectory;
 using JointTrajectoryPoint      = serial_link_interfaces::msg::JointTrajectoryPoint;
 
@@ -54,6 +58,8 @@ int main(int argc, char **argv)
     // Create clients and attach to node
     auto cartesianTrajectoryClient = std::make_shared<TrackCartesianTrajectory>(clientNode, "track_cartesian_trajectory", true);
     auto jointTrajectoryClient     = std::make_shared<TrackJointTrajectory>(clientNode, "track_joint_trajectory", true);
+    auto holdConfigurationClient   = std::make_shared<HoldConfiguration>(clientNode, "hold_configuration", true);
+    auto holdPoseClient            = std::make_shared<HoldPose>(clientNode, "hold_pose", true);
  
     std::shared_ptr<ActionClientInterface> activeClient = nullptr;                                  // To keep track of active client
 
@@ -98,40 +104,68 @@ int main(int argc, char **argv)
             if (iterator != jointConfigurations.end())
             {   
                 if (activeClient != nullptr and activeClient->is_running()) stop_robot(activeClient);
-                
-                auto goal = std::make_shared<JointTrajectoryAction::Goal>();                        // Generate goal object
-                
+
+                // Set the primary goal
+                auto goal = std::make_shared<JointTrajectoryAction::Goal>();                        // Generate goal object  
                 goal->points     = iterator->second;                                                // Attach the joint trajectory
                 goal->tolerances = jointErrorTolerances;
                 
-                RCLCPP_INFO(clientNode->get_logger(), "Moving to `%s` configuration(s).", commandPrompt.c_str()); // Inform user
+                // Set the follow-up goal            
+                jointTrajectoryClient->set_next_action([goal, holdConfigurationClient, clientNode, &activeClient]()
+                {
+                    auto nextGoal = std::make_shared<HoldConfigurationAction::Goal>();
+                    nextGoal->configuration = goal->points.back().position;
+                    nextGoal->tolerances    = goal->tolerances;
+                    
+                    if (holdConfigurationClient->send_goal(nextGoal))
+                    {
+                        activeClient = std::static_pointer_cast<ActionClientInterface>(holdConfigurationClient);
+                        RCLCPP_INFO(clientNode->get_logger(), "Holding final trajectory configuration.");
+                    }
+                });
+                        
+                // Send to server              
+                RCLCPP_INFO(clientNode->get_logger(),
+                            "Moving to `%s` configuration(s).",
+                            commandPrompt.c_str());
 
-                jointTrajectoryClient->send_goal(goal);                                             // Send request to client
-                
-                activeClient = jointTrajectoryClient;                                             
+                if (jointTrajectoryClient->send_goal(goal)) activeClient = jointTrajectoryClient;
             }
             else
             {
-                auto iterator = endpointPoses.find(commandPrompt);
+                auto iterator = endpointPoses.find(commandPrompt);                                  // Search for the named trajectory
                 
                 if (iterator != endpointPoses.end())
                 {   
-                    if (activeClient != nullptr and activeClient->is_running())
-                    {
-                        stop_robot(activeClient);
-                    }
+                    if (activeClient != nullptr and activeClient->is_running()) stop_robot(activeClient);
                     
-                    auto goal = std::make_shared<CartesianTrajectoryAction::Goal>();                // Generate goal object
-                    
+                    // Set the primary goal
+                    auto goal = std::make_shared<CartesianTrajectoryAction::Goal>();                // Generate goal object 
                     goal->points = iterator->second;                                                // Attach the joint trajectory
                     goal->position_tolerance = positionErrorTolerance;
                     goal->orientation_tolerance = orientationErrorTolerance;
                     
-                    RCLCPP_INFO(clientNode->get_logger(), "Moving `%s` .", commandPrompt.c_str());  // Inform user
+                    // Set the follow-up goal
+                    cartesianTrajectoryClient->set_next_action([goal, holdPoseClient, clientNode, &activeClient]()
+                    {
+                        auto nextGoal = std::make_shared<HoldPoseAction::Goal>();
+                        nextGoal->pose.pose  = goal->points.back().pose;
+                        nextGoal->position_tolerance = goal->position_tolerance;
+                        nextGoal->orientation_tolerance = goal->orientation_tolerance;
+                        
+                        if (holdPoseClient->send_goal(nextGoal))
+                        {
+                            activeClient = std::static_pointer_cast<ActionClientInterface>(holdPoseClient);
+                            RCLCPP_INFO(clientNode->get_logger(), "Holding final trajectory pose.");
+                        }
+                    });
+                     
+                    // Send to server
+                    RCLCPP_INFO(clientNode->get_logger(),
+                                "Moving `%s` .",
+                                commandPrompt.c_str());
 
-                    cartesianTrajectoryClient->send_goal(goal);                                     // Send request to client
-                    
-                    activeClient = cartesianTrajectoryClient;                                             
+                    if (cartesianTrajectoryClient->send_goal(goal)) activeClient = cartesianTrajectoryClient;                                       
                 }
                 else
                 {

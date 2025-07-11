@@ -27,14 +27,14 @@ namespace serial_link_action_client {
 template <class Action>
 ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientNode,
                                            const std::string &actionName)
-                                           : ActionClientInterface(),
-                                             _node(clientNode),
-                                             _actionClient(rclcpp_action::create_client<Action>(_node, actionName))
+: ActionClientInterface(),
+  _node(clientNode),
+  _actionClient(rclcpp_action::create_client<Action>(_node, actionName))
 {
     // Attach the response callback after an action request is sent
     _options.goal_response_callback = std::bind
     (
-        &ActionClientBase::handle_response,                                                         // Name of the method
+        &ActionClientBase::goal_response_callback,                                                  // Name of the method
         this,                                                                                       // Attach this node
         std::placeholders::_1                                                                       // I don't know what this does
     );
@@ -42,7 +42,7 @@ ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientN
     // Attach the result callback for when an action is finished
     _options.result_callback = std::bind
     (
-        &ActionClientBase::handle_result,                                                           // Name of the method
+        &ActionClientBase::result_callback,                                                         // Name of the method
         this,                                                                                       // Attach this node
         std::placeholders::_1                                                                       // I don't know what this does
     );
@@ -53,20 +53,19 @@ ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientN
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class Action>
 bool
-ActionClientBase<Action>::send_goal(const typename Action::Goal::SharedPtr &goal)
+ActionClientBase<Action>::send_goal(const typename Action::Goal::SharedPtr &goal,
+                                    std::chrono::milliseconds timeout)
 {
-    auto goalHandleFuture = _actionClient->async_send_goal(*goal, _options);                        // Send request, and link callback methods
-    
-    if (goalHandleFuture.wait_for(std::chrono::milliseconds(500)) == std::future_status::ready)
+    if (not _actionClient->wait_for_action_server(timeout))
     {
-        return goalHandleFuture.get() ? true : false;                                               // We want a fast return
-    }
-    else
-    {
-        RCLCPP_INFO(_node->get_logger(), "Failed to receive response from server after 500 ms.");
+        RCLCPP_ERROR(_node->get_logger(), "Server not available within %ld ms.", timeout.count());
         
         return false;
     }
+    
+    _actionClient->async_send_goal(*goal, _options);
+    
+    return true;
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -74,7 +73,7 @@ ActionClientBase<Action>::send_goal(const typename Action::Goal::SharedPtr &goal
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class Action>
 void
-ActionClientBase<Action>::handle_response(const typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr goalHandle)
+ActionClientBase<Action>::goal_response_callback(const typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr goalHandle)
 {
     if(goalHandle)                                                                                  // Not a null pointer
     {
@@ -91,13 +90,20 @@ ActionClientBase<Action>::handle_response(const typename rclcpp_action::ClientGo
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class Action>
 void
-ActionClientBase<Action>::handle_result(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result)
+ActionClientBase<Action>::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &result)
 {
     switch (result.code)
     {
         case rclcpp_action::ResultCode::SUCCEEDED:
         {
             RCLCPP_INFO(_node->get_logger(), "Action completed.");
+            
+            if (_nextAction)
+            {
+                _nextAction();                                                                      // Follow-up
+                _nextAction = nullptr;                                                              // Set null for future
+            }
+            
             break;
         }
         case rclcpp_action::ResultCode::CANCELED:
@@ -108,6 +114,13 @@ ActionClientBase<Action>::handle_result(const typename rclcpp_action::ClientGoal
         case rclcpp_action::ResultCode::ABORTED:
         {
             RCLCPP_ERROR(_node->get_logger(), "Action aborted.");
+            
+            if (_abortAction)
+            {
+                _abortAction();
+                _abortAction = nullptr;
+            }
+           
             break;
         }
         default:
@@ -146,6 +159,17 @@ ActionClientBase<Action>::cancel_action()
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //                                   Get the current goal status                                  //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+template <class Action>
+int8_t
+ActionClientBase<Action>::status() const
+{
+    if(_goalHandle) return _goalHandle->get_status();
+    else            return 0;
+}
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                    Executes after cancelling                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class Action>
@@ -169,5 +193,34 @@ ActionClientBase<Action>::cancel_callback(const typename rclcpp_action::Client<A
     }
 }
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //                              Check to see if the current action is running                     //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+template <class Action>
+bool
+ActionClientBase<Action>::is_running() const
+{
+    if(status() == 1    
+    or status() == 2
+    or status() == 3)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //         Set a lambda function for the next action when this one completes successfully         //                     
+////////////////////////////////////////////////////////////////////////////////////////////////////
+template <class Action>
+void
+ActionClientBase<Action>::set_next_action(std::function<void()> nextAction)
+{
+    _nextAction = std::move(nextAction);
+}
+
+} // namespace
 
