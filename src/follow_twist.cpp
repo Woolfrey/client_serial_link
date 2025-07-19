@@ -50,11 +50,14 @@ FollowTwist::result_callback(const typename rclcpp_action::ClientGoalHandle<Acti
         {
             RCLCPP_WARN(_node->get_logger(),
                         "This condition should never be called since the FollowTwist.action has no end conditions. "
-                        "How did that happen (o_O) ?");
+                        "How did that happen (ー_ーゞ ?");
             break;
         }
         case rclcpp_action::ResultCode::CANCELED:
         {
+            // NOTE FOR FUTURE ME: This action has a unique result field compared to other Cartesian
+            // control actions.
+            
             if(_verbose)
             {
                 std::string performanceResults =

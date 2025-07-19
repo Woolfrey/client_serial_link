@@ -291,5 +291,5 @@ stop_robot(std::shared_ptr<ActionClientInterface> activeClient)
     return true;
 }
 
-}
+} // namespace
 

@@ -50,7 +50,7 @@ FollowTransform::result_callback(const typename rclcpp_action::ClientGoalHandle<
         {
             RCLCPP_WARN(_node->get_logger(),
                         "This condition should never be called since the FollowTransform.action has no end conditions. "
-                        "How did that happen (o_O) ?");
+                        "How did that happen (ー_ーゞ ?");
             break;
         }
         case rclcpp_action::ResultCode::CANCELED:
@@ -58,17 +58,17 @@ FollowTransform::result_callback(const typename rclcpp_action::ClientGoalHandle<
             if(_verbose)
             {
                 std::string performanceResults =
-                "Position error (mm):\n"
+                "Position error (mm) :\n"
                 "   - Mean:      " + std::to_string(result.result->position_error.mean*1000) + "\n"
                 "   - Std. dev.: " + std::to_string(sqrt(result.result->position_error.variance)*1000) + "\n"
                 "   - Min:       " + std::to_string(result.result->position_error.min*1000) + "\n"
                 "   - Max:       " + std::to_string(result.result->position_error.max*1000) + "\n"
-                "Orientation error (deg):\n"
+                "Orientation error (deg) :\n"
                 "   - Mean:      " + std::to_string(result.result->orientation_error.mean*180/M_PI) + "\n"
                 "   - Std. dev.: " + std::to_string(sqrt(result.result->orientation_error.variance)*180/M_PI) + "\n"
                 "   - Min:       " + std::to_string(result.result->orientation_error.min*180/M_PI) + "\n"
-                "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI);
-                
+                "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI); 
+
                 RCLCPP_INFO(_node->get_logger(), "Follow transform action ended.\n%s", performanceResults.c_str());
             }
             else

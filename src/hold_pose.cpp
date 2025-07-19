@@ -47,7 +47,8 @@ HoldPose::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>
         case rclcpp_action::ResultCode::SUCCEEDED:
         {
             RCLCPP_WARN(_node->get_logger(),
-                        "This case should never be called. How did that happen? (ー_ーゞ");
+                        "This case should never be called because the HoldPose action has no end condition. "
+                        "How did that happen? (ー_ーゞ");
             break;
         }
         case rclcpp_action::ResultCode::CANCELED:
@@ -64,13 +65,14 @@ HoldPose::result_callback(const typename rclcpp_action::ClientGoalHandle<Action>
                 "   - Mean:      " + std::to_string(result.result->orientation_error.mean*180/M_PI) + "\n"
                 "   - Std. dev.: " + std::to_string(sqrt(result.result->orientation_error.variance)*180/M_PI) + "\n"
                 "   - Min:       " + std::to_string(result.result->orientation_error.min*180/M_PI) + "\n"
-                "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI);            
-     
-                RCLCPP_INFO(_node->get_logger(),
-                            "Hold pose action was cancelled..\n%s",
-                            performanceResults.c_str());
+                "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI); 
+                
+                RCLCPP_INFO(_node->get_logger(), "Hold pose action was cancelled.\n%s", performanceResults.c_str());
             }
-            RCLCPP_INFO(_node->get_logger(), "Hold pose action was canceled.");
+            else
+            {
+                RCLCPP_INFO(_node->get_logger(), "Hold pose action was canceled.");
+            }
 
             break;
         }

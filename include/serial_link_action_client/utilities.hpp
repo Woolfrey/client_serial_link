@@ -19,8 +19,8 @@
 #include <serial_link_action_client/track_joint_trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>                                                                        // ROS2 C++ library
 #include <rclcpp_action/rclcpp_action.hpp>                                                          // ROS2 C++ action library
-#include <serial_link_interfaces/msg/joint_trajectory_point.hpp>
 #include <serial_link_interfaces/msg/cartesian_trajectory_point.hpp>
+#include <serial_link_interfaces/msg/joint_trajectory_point.hpp>
 
 namespace serial_link_action_client {
 
@@ -60,4 +60,4 @@ load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node);
 bool
 stop_robot(std::shared_ptr<ActionClientInterface> activeClient);
 
-}
+} // namespace

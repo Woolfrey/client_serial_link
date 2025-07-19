@@ -69,6 +69,35 @@ ActionClientBase<Action>::send_goal(const typename Action::Goal::SharedPtr &goal
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //                 Send an action request to the server, with custom callback options             //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+template <class Action>
+bool
+ActionClientBase<Action>::send_goal(const typename Action::Goal::SharedPtr &goal,
+                                    rclcpp_action::Client<Action>::SendGoalOptions &options,
+                                    std::chrono::milliseconds timeout)
+{
+    // Attach default response callback for rapid goal switching
+    options.goal_response_callback = std::bind
+    (
+        &ActionClientBase::goal_response_callback,                                                  // Name of the method
+        this,                                                                                       // Attach this node
+        std::placeholders::_1                                                                       // I don't know what this does
+    );
+    
+    // Wait for server to appear
+    if (not _actionClient->wait_for_action_server(timeout))
+    {
+        RCLCPP_ERROR(_node->get_logger(), "Server not available within %ld ms.", timeout.count());
+        return false;
+    }
+
+    _actionClient->async_send_goal(*goal, options);
+
+    return true;
+}
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                         Processes the response to an action request                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class Action>
@@ -97,13 +126,7 @@ ActionClientBase<Action>::result_callback(const typename rclcpp_action::ClientGo
         case rclcpp_action::ResultCode::SUCCEEDED:
         {
             RCLCPP_INFO(_node->get_logger(), "Action completed.");
-            
-            if (_nextAction)
-            {
-                _nextAction();                                                                      // Follow-up
-                _nextAction = nullptr;                                                              // Set null for future
-            }
-            
+
             break;
         }
         case rclcpp_action::ResultCode::CANCELED:
@@ -114,13 +137,7 @@ ActionClientBase<Action>::result_callback(const typename rclcpp_action::ClientGo
         case rclcpp_action::ResultCode::ABORTED:
         {
             RCLCPP_ERROR(_node->get_logger(), "Action aborted.");
-            
-            if (_abortAction)
-            {
-                _abortAction();
-                _abortAction = nullptr;
-            }
-           
+
             break;
         }
         default:
@@ -210,16 +227,6 @@ ActionClientBase<Action>::is_running() const
     {
         return false;
     }
-}
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
- //         Set a lambda function for the next action when this one completes successfully         //                     
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class Action>
-void
-ActionClientBase<Action>::set_next_action(std::function<void()> nextAction)
-{
-    _nextAction = std::move(nextAction);
 }
 
 } // namespace

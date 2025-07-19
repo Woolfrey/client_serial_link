@@ -60,7 +60,7 @@ TrackCartesianTrajectory::result_callback(const typename rclcpp_action::ClientGo
                 "   - Mean:      " + std::to_string(result.result->orientation_error.mean*180/M_PI) + "\n"
                 "   - Std. dev.: " + std::to_string(sqrt(result.result->orientation_error.variance)*180/M_PI) + "\n"
                 "   - Min:       " + std::to_string(result.result->orientation_error.min*180/M_PI) + "\n"
-                "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI);            
+                "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI); 
      
                 RCLCPP_INFO(_node->get_logger(),
                             "Cartesian trajectory tracking complete.\n%s",
@@ -69,13 +69,6 @@ TrackCartesianTrajectory::result_callback(const typename rclcpp_action::ClientGo
             else
             {
                 RCLCPP_INFO(_node->get_logger(), "Cartesian trajectory tracking complete.");
-            }
-            
-            // Follow up with next action
-            if (_nextAction)
-            {
-                _nextAction();
-                _nextAction = nullptr;
             }
             
             break;

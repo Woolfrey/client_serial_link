@@ -46,7 +46,8 @@ HoldConfiguration::result_callback(const typename rclcpp_action::ClientGoalHandl
         case rclcpp_action::ResultCode::SUCCEEDED:
         {
             RCLCPP_INFO(_node->get_logger(),
-                        "This case should never be called. How did that happen??? (ー_ーゞ");                         
+                        "This case should never be called because the HoldConfiguration action has no end condition. "
+                        "How did that happen??? (ー_ーゞ");                         
             break;
         }
         case rclcpp_action::ResultCode::CANCELED:
@@ -55,17 +56,18 @@ HoldConfiguration::result_callback(const typename rclcpp_action::ClientGoalHandl
             {
                 std::string performanceResults = "";
                 
-                int jointNum = 1;
-                
+                int jointNum = 0;
+
                 for(auto stats : result.result->position_error)
                 {
+                    ++jointNum;
+                    
                     performanceResults += "Joint " + std::to_string(jointNum) + ":\n"
                                           "   - Mean:      " + std::to_string(stats.mean) + "\n"
                                           "   - Std. dev.: " + std::to_string(sqrt(stats.variance)) + "\n"
                                           "   - Min.:      " + std::to_string(stats.min) + "\n"
                                           "   - Max.:      " + std::to_string(stats.max) + "\n";
                     
-                    ++jointNum;
                 }
                 
                 RCLCPP_INFO(_node->get_logger(),

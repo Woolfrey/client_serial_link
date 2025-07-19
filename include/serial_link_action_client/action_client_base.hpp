@@ -54,6 +54,18 @@ class ActionClientBase : public serial_link_action_client::ActionClientInterface
         bool
         send_goal(const typename Action::Goal::SharedPtr &goal,
                   std::chrono::milliseconds timeout = std::chrono::seconds(30));
+                  
+        /**
+         * @brief Sends a goal using explicitly provided SendGoalOptions instead of the internal defaults.
+         * @param goal The goal to send.
+         * @param options Custom callbacks and behavior.
+         * @param timeout Time to wait for the server before giving up.
+         * @return True if the goal was accepted and sent.
+         */
+        bool
+        send_goal(const typename Action::Goal::SharedPtr &goal,
+                  rclcpp_action::Client<Action>::SendGoalOptions &options,
+                  std::chrono::milliseconds timeout = std::chrono::milliseconds(100));      
 
         /**
          * @brief Asks the action to cancel.
@@ -83,27 +95,9 @@ class ActionClientBase : public serial_link_action_client::ActionClientInterface
          */
         bool
         is_running() const override;
-        
-        /**
-         * @brief Sets the action to be executed after this one is completes successfully.
-         * @nextAction A lambda function.
-         */
-        void
-        set_next_action(std::function<void()> nextAction);
-        
-        /**
-         * @brief Set the action that is executed if this one is aborted.
-         * @abortAction A lambda function.
-         */
-        void
-        set_abort_action(std::function<void()> abortAction);
- 
+
     protected:
-        
-        std::function<void()> _abortAction;                                                         // What the robot should do if the action is aborted
-        
-        std::function<void()> _nextAction;                                                          // Optional follow-up action
-        
+
         std::shared_ptr<rclcpp::Node> _node;                                                        ///< Pointer to client node.
         
         typename rclcpp_action::Client<Action>::SendGoalOptions _options;                           ///< These are used to set callback functions        

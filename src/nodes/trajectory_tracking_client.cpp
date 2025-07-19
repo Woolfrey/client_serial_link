@@ -100,36 +100,64 @@ int main(int argc, char **argv)
         else
         {
             auto iterator = jointConfigurations.find(commandPrompt);                                // Find the named configuration
-            
+
             if (iterator != jointConfigurations.end())
-            {   
-                if (activeClient != nullptr and activeClient->is_running()) stop_robot(activeClient);
+            {
+                if (activeClient != nullptr && activeClient->is_running()) stop_robot(activeClient); // As it says
 
                 // Set the primary goal
-                auto goal = std::make_shared<JointTrajectoryAction::Goal>();                        // Generate goal object  
-                goal->points     = iterator->second;                                                // Attach the joint trajectory
-                goal->tolerances = jointErrorTolerances;
-                
-                // Set the follow-up goal            
-                jointTrajectoryClient->set_next_action([goal, holdConfigurationClient, clientNode, &activeClient]()
-                {
-                    auto nextGoal = std::make_shared<HoldConfigurationAction::Goal>();
-                    nextGoal->configuration = goal->points.back().position;
-                    nextGoal->tolerances    = goal->tolerances;
-                    
-                    if (holdConfigurationClient->send_goal(nextGoal))
-                    {
-                        activeClient = std::static_pointer_cast<ActionClientInterface>(holdConfigurationClient);
-                        RCLCPP_INFO(clientNode->get_logger(), "Holding final trajectory configuration.");
-                    }
-                });
-                        
-                // Send to server              
-                RCLCPP_INFO(clientNode->get_logger(),
-                            "Moving to `%s` configuration(s).",
-                            commandPrompt.c_str());
+                auto goal = std::make_shared<JointTrajectoryAction::Goal>();                        // Create goal object
+                goal->points = iterator->second;                                                    // Get the TrajectoryPoints msg
+                goal->tolerances = jointErrorTolerances;                                            // Add the tolerances
 
-                if (jointTrajectoryClient->send_goal(goal)) activeClient = jointTrajectoryClient;
+                // Prepare custom callback
+                rclcpp_action::Client<JointTrajectoryAction>::SendGoalOptions sendOptions;          // So we can attach the callback functions    
+
+                sendOptions.result_callback = [holdConfigurationClient, clientNode, &activeClient, goal](const typename rclcpp_action::ClientGoalHandle<JointTrajectoryAction>::WrappedResult &result) mutable
+                {
+                    if (result.code == rclcpp_action::ResultCode::SUCCEEDED)
+                    {
+                        // Create hold pose goal from the last point in trajectory
+                        auto holdGoal = std::make_shared<HoldConfigurationAction::Goal>();
+                        holdGoal->configuration = goal->points.back().position;
+                        holdGoal->tolerances = goal->tolerances;
+
+                        // Send hold configuration goal
+                        if (holdConfigurationClient->send_goal(holdGoal)) activeClient = holdConfigurationClient;
+                        
+                        std::string performanceResults = "";
+                        
+                        int jointNum = 0;
+
+                        for(auto stats : result.result->position_error)
+                        {
+                            ++jointNum;
+                            
+                            performanceResults += "Joint " + std::to_string(jointNum) + ":\n"
+                                                  "   - Mean:      " + std::to_string(stats.mean) + "\n"
+                                                  "   - Std. dev.: " + std::to_string(sqrt(stats.variance)) + "\n"
+                                                  "   - Min.:      " + std::to_string(stats.min) + "\n"
+                                                  "   - Max.:      " + std::to_string(stats.max) + "\n";
+                        }
+                        
+                        RCLCPP_INFO(clientNode->get_logger(),
+                                    "Joint trajectory tracking action completed. Position error:\n%s",
+                                    performanceResults.c_str());
+                    }
+                    else if(result.code == rclcpp_action::ResultCode::CANCELED)
+                    {
+                        RCLCPP_INFO(clientNode->get_logger(), "Joint trajectory tracking cancelled.");
+                    }
+                    else if(result.code == rclcpp_action::ResultCode::ABORTED)
+                    {
+                        RCLCPP_WARN(clientNode->get_logger(), "Joint trajectory tracking aborted: %s.", result.result->message.c_str());
+                    }
+                };
+
+                // Send trajectory goal with result callback attached
+                RCLCPP_INFO(clientNode->get_logger(), "Moving to `%s` configuration(s).", commandPrompt.c_str());
+
+                if (jointTrajectoryClient->send_goal(goal, sendOptions)) activeClient = jointTrajectoryClient;
             }
             else
             {
@@ -144,28 +172,49 @@ int main(int argc, char **argv)
                     goal->points = iterator->second;                                                // Attach the joint trajectory
                     goal->position_tolerance = positionErrorTolerance;
                     goal->orientation_tolerance = orientationErrorTolerance;
-                    
-                    // Set the follow-up goal
-                    cartesianTrajectoryClient->set_next_action([goal, holdPoseClient, clientNode, &activeClient]()
-                    {
-                        auto nextGoal = std::make_shared<HoldPoseAction::Goal>();
-                        nextGoal->pose.pose  = goal->points.back().pose;
-                        nextGoal->position_tolerance = goal->position_tolerance;
-                        nextGoal->orientation_tolerance = goal->orientation_tolerance;
-                        
-                        if (holdPoseClient->send_goal(nextGoal))
-                        {
-                            activeClient = std::static_pointer_cast<ActionClientInterface>(holdPoseClient);
-                            RCLCPP_INFO(clientNode->get_logger(), "Holding final trajectory pose.");
-                        }
-                    });
-                     
-                    // Send to server
-                    RCLCPP_INFO(clientNode->get_logger(),
-                                "Moving `%s` .",
-                                commandPrompt.c_str());
+           
+                    // Prepare custom callback
+                    rclcpp_action::Client<CartesianTrajectoryAction>::SendGoalOptions sendOptions;  // So we can attach the callback functions    
 
-                    if (cartesianTrajectoryClient->send_goal(goal)) activeClient = cartesianTrajectoryClient;                                       
+                    sendOptions.result_callback = [holdPoseClient, clientNode, &activeClient, goal](const typename rclcpp_action::ClientGoalHandle<CartesianTrajectoryAction>::WrappedResult &result) mutable
+                    {
+                        if (result.code == rclcpp_action::ResultCode::SUCCEEDED)
+                        {
+                            // Create hold pose goal from the last point in trajectory
+                            auto holdGoal = std::make_shared<HoldPoseAction::Goal>();
+                            holdGoal->pose = result.result->final_pose;
+                            holdGoal->position_tolerance = goal->position_tolerance;
+                            holdGoal->orientation_tolerance = goal->orientation_tolerance;
+
+                            if (holdPoseClient->send_goal(holdGoal)) activeClient = holdPoseClient;
+                            
+                            std::string performanceResults =
+                            "Position error (mm) :\n"
+                            "   - Mean:      " + std::to_string(result.result->position_error.mean*1000) + "\n"
+                            "   - Std. dev.: " + std::to_string(sqrt(result.result->position_error.variance)*1000) + "\n"
+                            "   - Min:       " + std::to_string(result.result->position_error.min*1000) + "\n"
+                            "   - Max:       " + std::to_string(result.result->position_error.max*1000) + "\n"
+                            "Orientation error (deg) :\n"
+                            "   - Mean:      " + std::to_string(result.result->orientation_error.mean*180/M_PI) + "\n"
+                            "   - Std. dev.: " + std::to_string(sqrt(result.result->orientation_error.variance)*180/M_PI) + "\n"
+                            "   - Min:       " + std::to_string(result.result->orientation_error.min*180/M_PI) + "\n"
+                            "   - Max:       " + std::to_string(result.result->orientation_error.max*180/M_PI); 
+                
+                            RCLCPP_INFO(clientNode->get_logger(), "Cartesian trajectory tracking completed.\n%s", performanceResults.c_str());
+                        }
+                        else if(result.code == rclcpp_action::ResultCode::CANCELED)
+                        {
+                            RCLCPP_INFO(clientNode->get_logger(), "Cartesian trajectory tracking cancelled.");
+                        }
+                        else if(result.code == rclcpp_action::ResultCode::ABORTED)
+                        {
+                            RCLCPP_WARN(clientNode->get_logger(), "Cartesian trajectory tracking aborted: %s.", result.result->message.c_str());
+                        }
+                    };
+                    
+                    RCLCPP_INFO(clientNode->get_logger(), "Moving `%s` .", commandPrompt.c_str());
+
+                    if (cartesianTrajectoryClient->send_goal(goal, sendOptions)) activeClient = cartesianTrajectoryClient;                                       
                 }
                 else
                 {

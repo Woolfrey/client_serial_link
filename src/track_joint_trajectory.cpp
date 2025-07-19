@@ -49,32 +49,25 @@ TrackJointTrajectory::result_callback(const typename rclcpp_action::ClientGoalHa
     {
         case rclcpp_action::ResultCode::SUCCEEDED:
         {
-            // Follow up with next action
-            if (_nextAction)
-            {
-                _nextAction();
-                _nextAction = nullptr;
-            }
-            
             if(_verbose)
             {
                 std::string performanceResults = "";
                 
-                int jointNum = 1;
-                
+                int jointNum = 0;
+
                 for(auto stats : result.result->position_error)
                 {
+                    ++jointNum;
+                    
                     performanceResults += "Joint " + std::to_string(jointNum) + ":\n"
                                           "   - Mean:      " + std::to_string(stats.mean) + "\n"
                                           "   - Std. dev.: " + std::to_string(sqrt(stats.variance)) + "\n"
                                           "   - Min.:      " + std::to_string(stats.min) + "\n"
                                           "   - Max.:      " + std::to_string(stats.max) + "\n";
-                    
-                    ++jointNum;
                 }
                 
                 RCLCPP_INFO(_node->get_logger(),
-                            "Joint trajectory tracking complete. Position error:\n%s",
+                            "Joint trajectory tracking action completed. Position error:\n%s",
                             performanceResults.c_str());
             }
             else
