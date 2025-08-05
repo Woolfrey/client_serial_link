@@ -30,7 +30,7 @@ TrackCartesianTrajectory::TrackCartesianTrajectory(std::shared_ptr<rclcpp::Node>
   _verbose(verbose)
 {
     // Override the result callback in the base class
-    _options.result_callback = std::bind
+    _defaultOptions.result_callback = std::bind
     (
         &TrackCartesianTrajectory::result_callback,                                                 // Name of the method
         this,                                                                                       // Attach this node

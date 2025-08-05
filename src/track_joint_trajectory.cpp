@@ -31,7 +31,7 @@ TrackJointTrajectory::TrackJointTrajectory(std::shared_ptr<rclcpp::Node> clientN
   _verbose(verbose)
 {
     // Override the result callback in the base class
-    _options.result_callback = std::bind
+    _defaultOptions.result_callback = std::bind
     (
         &TrackJointTrajectory::result_callback,                                                     // Name of the method
         this,                                                                                       // Attach this node
