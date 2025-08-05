@@ -2,8 +2,8 @@
  * @file    follow_twist_client.cpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    March 2025
- * @version 1.0
+ * @date    July 2025
+ * @version 2.0
  * @brief   An action client and user interface for controlling a robot through the FollowTwist action.
  * 
  * @details This executable launches clients for a TrackJointTrajectory & FollowTwist actions.
@@ -20,14 +20,16 @@
 #include <rclcpp/rclcpp.hpp>                                                                        // ROS2 C++ library
 #include <rclcpp_action/rclcpp_action.hpp>                                                          // ROS2 C++ action library
 #include <serial_link_action_client/follow_twist.hpp>                                               // Action client class
+#include <serial_link_action_client/hold_configuration.hpp>
 #include <serial_link_action_client/track_joint_trajectory.hpp>                                     // Action client class
 #include <serial_link_action_client/utilities.hpp>                                                  // Helper functions
 #include <thread>                                                                                   // Threading (duh!)
 
 // These make code easier to read:
-using FollowTwistAction     = serial_link_interfaces::action::FollowTwist;
-using JointTrajectoryAction = serial_link_interfaces::action::TrackJointTrajectory;
-using JointTrajectoryPoint  = serial_link_interfaces::msg::JointTrajectoryPoint;
+using FollowTwistAction       = serial_link_interfaces::action::FollowTwist;
+using HoldConfigurationAction = serial_link_interfaces::action::HoldConfiguration;
+using JointTrajectoryAction   = serial_link_interfaces::action::TrackJointTrajectory;
+using JointTrajectoryPoint    = serial_link_interfaces::msg::JointTrajectoryPoint;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////
  //                                          MAIN                                                   //
@@ -54,6 +56,8 @@ int main(int argc, char **argv)
     auto followTwistClient     = std::make_shared<FollowTwist>(clientNode, "follow_twist", true);
     
     auto jointTrajectoryClient = std::make_shared<TrackJointTrajectory>(clientNode, "track_joint_trajectory", true);
+    
+    auto holdConfigurationClient = std::make_shared<HoldConfiguration>(clientNode, "hold_configuration", true);
  
     std::shared_ptr<ActionClientInterface> activeClient = nullptr;                                  // To keep track of active client
 
@@ -92,17 +96,38 @@ int main(int argc, char **argv)
         {
             if (activeClient != nullptr and activeClient->is_running()) stop_robot(activeClient);
             
-            RCLCPP_INFO(clientNode->get_logger(), "Following twist command.");
-            
+            // Create the goal       
             auto goal = std::make_shared<FollowTwistAction::Goal>();
             goal->topic_name = twistTopicName;
             goal->linear_tolerance = linearVelocityTolerance;
             goal->angular_tolerance = angularVelocityTolerance;
             goal->timeout = timeout;
             
-            followTwistClient->send_goal(goal);
+            // Create custom result callback
+            auto resultCallback = [holdConfigurationClient, clientNode, &activeClient, goal, jointTrackingTolerances](const auto &result) mutable
+            {
+                if (result.code == rclcpp_action::ResultCode::SUCCEEDED)
+                {
+                    RCLCPP_WARN(clientNode->get_logger(), "This case should never be called. How did that happen?");
+                }
+                else if (result.code == rclcpp_action::ResultCode::CANCELED)
+                {
+                    RCLCPP_INFO(clientNode->get_logger(), "Follow twist action cancelled.");
+                }
+                else if (result.code == rclcpp_action::ResultCode::ABORTED)
+                {
+                    RCLCPP_WARN(clientNode->get_logger(), "Follow twist action aborted: %s.", result.result->message.c_str());
+                    auto holdGoal = std::make_shared<HoldConfigurationAction::Goal>();
+                    holdGoal->tolerances = jointTrackingTolerances;
+                    
+                    if (holdConfigurationClient->send_goal(holdGoal)) activeClient = holdConfigurationClient;
+                }
+            };
             
-            activeClient = followTwistClient;
+            // Send the goal
+            RCLCPP_INFO(clientNode->get_logger(), "Following twist command.");
+            
+            if (followTwistClient->send_goal(goal, nullptr, nullptr, resultCallback)) activeClient = followTwistClient;
         }
         else
         {
@@ -112,16 +137,39 @@ int main(int argc, char **argv)
             {   
                 if (activeClient != nullptr and activeClient->is_running()) stop_robot(activeClient);
                 
+                // Create the goal
                 auto goal = std::make_shared<JointTrajectoryAction::Goal>();                        // Generate goal object
-                
                 goal->points = iterator->second;                                                    // Attach the joint trajectory
                 goal->tolerances = jointTrackingTolerances;
                 
+                // Custom function for when action is finished
+                auto resultCallback = [holdConfigurationClient, clientNode, &activeClient, goal](const auto &result) mutable
+                {
+                    if (result.code == rclcpp_action::ResultCode::SUCCEEDED)
+                    {
+                        RCLCPP_INFO(clientNode->get_logger(), "Joint trajectory tracking action completed.");
+                        
+                        // Hold final configuration at end of trajectory
+                        auto holdGoal = std::make_shared<HoldConfigurationAction::Goal>();
+                        holdGoal->configuration = goal->points.back().position;
+                        holdGoal->tolerances = goal->tolerances;
+
+                        if (holdConfigurationClient->send_goal(holdGoal)) activeClient = holdConfigurationClient;
+                    }
+                    else if (result.code == rclcpp_action::ResultCode::CANCELED)
+                    {
+                        RCLCPP_INFO(clientNode->get_logger(), "Joint trajectory tracking cancelled.");
+                    }
+                    else if (result.code == rclcpp_action::ResultCode::ABORTED)
+                    {
+                        RCLCPP_WARN(clientNode->get_logger(), "Joint trajectory tracking aborted: %s.", result.result->message.c_str());
+                    }
+                };
+            
+                // Send the goal
                 RCLCPP_INFO(clientNode->get_logger(), "Moving to `%s` configuration(s).", commandPrompt.c_str()); // Inform user
 
-                jointTrajectoryClient->send_goal(goal);                                             // Send request to client
-                
-                activeClient = jointTrajectoryClient;                                             
+                if (jointTrajectoryClient->send_goal(goal, nullptr, nullptr, resultCallback)) activeClient = jointTrajectoryClient;                                             
             }
         }
     }
