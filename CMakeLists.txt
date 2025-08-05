@@ -48,6 +48,7 @@ ament_target_dependencies(trajectory_tracking_client "action_msgs"
 # Follow transform
 add_executable(follow_transform_client src/nodes/follow_transform_client.cpp
                                        src/follow_transform.cpp
+                                       src/hold_configuration.cpp
                                        src/track_joint_trajectory.cpp
                                        src/utilities.cpp)
                                           
@@ -61,6 +62,7 @@ ament_target_dependencies(follow_transform_client "action_msgs"
 # Follow twist
 add_executable(follow_twist_client src/nodes/follow_twist_client.cpp
                                    src/follow_twist.cpp
+                                   src/hold_configuration.cpp
                                    src/track_joint_trajectory.cpp
                                    src/utilities.cpp)
                                           
