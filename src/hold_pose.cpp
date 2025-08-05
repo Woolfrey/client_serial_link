@@ -28,7 +28,7 @@ HoldPose::HoldPose(std::shared_ptr<rclcpp::Node> clientNode,
   _verbose(verbose)
 {
     // Override the result callback in the base class
-    _options.result_callback = std::bind
+    _defaultOptions.result_callback = std::bind
     (
         &HoldPose::result_callback,                                                                 // Name of the method
         this,                                                                                       // Attach this node
