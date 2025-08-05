@@ -44,28 +44,21 @@ class ActionClientBase : public serial_link_action_client::ActionClientInterface
          */
         ActionClientBase(std::shared_ptr<rclcpp::Node> clientNode,
                          const std::string &actionName);
-
-        /**
-         * @brief Sends a goal to the server to perform a given action.
-         * @param goal The goal field of the action to be sent to the server.
-         * @param timeout Optional time to wait before canceling.
-         * @return Returns true of the goal is accepted, false if not.
-         */
-        bool
-        send_goal(const typename Action::Goal::SharedPtr &goal,
-                  std::chrono::milliseconds timeout = std::chrono::seconds(30));
                   
         /**
-         * @brief Sends a goal using explicitly provided SendGoalOptions instead of the internal defaults.
-         * @param goal The goal to send.
-         * @param options Custom callbacks and behavior.
-         * @param timeout Time to wait for the server before giving up.
-         * @return True if the goal was accepted and sent.
+         * @brief Send goal to the server using custom callbacks.
+         * @param goal The goal field of the action.
+         * @param goalResponseCallback The function that is executed after receiving the response from the server.
+         * @param feedbackCallback The function that executes when feedback is received.
+         * @param resultCallback The function that executes when the action ends.
+         * @return False if the server is not available.
          */
         bool
         send_goal(const typename Action::Goal::SharedPtr &goal,
-                  rclcpp_action::Client<Action>::SendGoalOptions &options,
-                  std::chrono::milliseconds timeout = std::chrono::milliseconds(100));      
+                  std::function<void(typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr)> goalResponseCallback = nullptr,
+                  std::function<void(typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr, const typename Action::Feedback::ConstSharedPtr &)> feedbackCallback = nullptr,
+                  std::function<void(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &)> resultCallback = nullptr,
+                  std::chrono::milliseconds timeout = std::chrono::milliseconds(100));
 
         /**
          * @brief Asks the action to cancel.
@@ -100,7 +93,7 @@ class ActionClientBase : public serial_link_action_client::ActionClientInterface
 
         std::shared_ptr<rclcpp::Node> _node;                                                        ///< Pointer to client node.
         
-        typename rclcpp_action::Client<Action>::SendGoalOptions _options;                           ///< These are used to set callback functions        
+        typename rclcpp_action::Client<Action>::SendGoalOptions _defaultOptions;                    ///< These are used to set callback functions        
        
         typename rclcpp_action::Client<Action>::SharedPtr _actionClient;                            ///< This is the foundation of the class
 

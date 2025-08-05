@@ -32,7 +32,7 @@ ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientN
   _actionClient(rclcpp_action::create_client<Action>(_node, actionName))
 {
     // Attach the response callback after an action request is sent
-    _options.goal_response_callback = std::bind
+    _defaultOptions.goal_response_callback = std::bind
     (
         &ActionClientBase::goal_response_callback,                                                  // Name of the method
         this,                                                                                       // Attach this node
@@ -40,7 +40,7 @@ ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientN
     );
 
     // Attach the result callback for when an action is finished
-    _options.result_callback = std::bind
+    _defaultOptions.result_callback = std::bind
     (
         &ActionClientBase::result_callback,                                                         // Name of the method
         this,                                                                                       // Attach this node
@@ -49,50 +49,38 @@ ActionClientBase<Action>::ActionClientBase(std::shared_ptr<rclcpp::Node> clientN
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
- //                              Send an action request to the server                              //
+ //                 Send an action request to the server, with custom callback options             //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class Action>
 bool
 ActionClientBase<Action>::send_goal(const typename Action::Goal::SharedPtr &goal,
+                                    std::function<void(typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr)> goalResponseCallback,
+                                    std::function<void(typename rclcpp_action::ClientGoalHandle<Action>::SharedPtr, const typename Action::Feedback::ConstSharedPtr &)> feedbackCallback,
+                                    std::function<void(const typename rclcpp_action::ClientGoalHandle<Action>::WrappedResult &)> resultCallback,
                                     std::chrono::milliseconds timeout)
 {
+    typename rclcpp_action::Client<Action>::SendGoalOptions options;
+
+    // Use default callbacks if user hasn't supplied one
+    options.goal_response_callback = goalResponseCallback
+                                   ? goalResponseCallback
+                                   : _defaultOptions.goal_response_callback;
+
+    if (feedbackCallback) options.feedback_callback = feedbackCallback;
+    
+    options.result_callback = resultCallback
+                            ? resultCallback
+                            : _defaultOptions.result_callback;                     
+
+    // Wait for the action server
     if (not _actionClient->wait_for_action_server(timeout))
     {
         RCLCPP_ERROR(_node->get_logger(), "Server not available within %ld ms.", timeout.count());
         
         return false;
     }
-    
-    _actionClient->async_send_goal(*goal, _options);
-    
-    return true;
-}
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
- //                 Send an action request to the server, with custom callback options             //
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class Action>
-bool
-ActionClientBase<Action>::send_goal(const typename Action::Goal::SharedPtr &goal,
-                                    rclcpp_action::Client<Action>::SendGoalOptions &options,
-                                    std::chrono::milliseconds timeout)
-{
-    // Attach default response callback for rapid goal switching
-    options.goal_response_callback = std::bind
-    (
-        &ActionClientBase::goal_response_callback,                                                  // Name of the method
-        this,                                                                                       // Attach this node
-        std::placeholders::_1                                                                       // I don't know what this does
-    );
-    
-    // Wait for server to appear
-    if (not _actionClient->wait_for_action_server(timeout))
-    {
-        RCLCPP_ERROR(_node->get_logger(), "Server not available within %ld ms.", timeout.count());
-        return false;
-    }
-
-    _actionClient->async_send_goal(*goal, options);
+    _actionClient->async_send_goal(*goal, options);                                                 // Send goal asynchronously
 
     return true;
 }
