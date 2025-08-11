@@ -24,8 +24,8 @@ This package contains [ROS2 action clients](https://design.ros2.org/articles/act
 
 - [Ubuntu 22.04](https://ubuntu.com/blog/tag/22-04-lts), or later,
 - [ROS2 Humble](https://docs.ros.org/en/humble/index.html), or later, the
-- The [serial link interfaces](https://github.com/Woolfrey/interface_serial_link) package,
-- The [serial_link_action_server](https://github/com/Woolfrey/server_serial_link) package (unless using your own).
+- The [serial link interfaces v1.1.0](https://github.com/Woolfrey/interface_serial_link/releases/tag/v1.1.0) package,
+- The [serial_link_action_server v2.0.0](https://github/com/Woolfrey/server_serial_link](https://github.com/Woolfrey/server_serial_link/releases/tag/v2.0.0)) package (unless using your own).
 
 > [!NOTE]
 > This package was built and tested using Ubuntu 22.04, and ROS2 Humble.
