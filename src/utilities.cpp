@@ -2,8 +2,8 @@
  * @file    Utilities.cpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    February 2025
- * @version 1.0
+ * @date    August 2025
+ * @version 1.1
  * @brief   Useful functions for use in action clients.
  * 
  * @details This source file elaborates on the forward declarations in the associated header file
@@ -251,41 +251,33 @@ load_endpoint_poses(const std::shared_ptr<rclcpp::Node> &node)
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //                              Stops the active action server from running                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-bool
-stop_robot(std::shared_ptr<ActionClientInterface> activeClient)
+bool stop_robot(std::shared_ptr<ActionClientInterface> activeClient)
 {
-    if (activeClient == nullptr)
-    {
-        return true;                                                                                // No active action
-    }
+    if (not activeClient) return true;                                                              // No active action
 
-    // Possible return codes:
-    // 0 = Unknown
-    // 1 = Accepted
-    // 2 = Executing
-    // 3 = Canceling
-    // 4 = Succeeded
-    // 5 = Canceled
-    // 6 = Aborted
+    auto status = activeClient->status();                                               
 
-    if (activeClient->status() == 0)
-    {
-        return false; // A problem
-    }
+    if (status == rclcpp_action::GoalStatus::STATUS_UNKNOWN) return false;                          // A problem
 
-    // If running, cancel
-    if (activeClient->status() == 1
-    or  activeClient->status() == 2)
+    // Cancel action of running
+    if (status == rclcpp_action::GoalStatus::STATUS_ACCEPTED
+    or  status == rclcpp_action::GoalStatus::STATUS_EXECUTING)
     {
         activeClient->cancel_action();
     }
 
     // Wait until action is resolved
-    while (activeClient->status() != 4 &&
-           activeClient->status() != 5 &&
-           activeClient->status() != 6)
-    {      
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));                                 // Wait for 10ms
+    while (true)
+    {
+        status = activeClient->status();    
+        
+        if (status == rclcpp_action::GoalStatus::STATUS_SUCCEEDED
+        or  status == rclcpp_action::GoalStatus::STATUS_CANCELED
+        or  status == rclcpp_action::GoalStatus::STATUS_ABORTED)
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     return true;
