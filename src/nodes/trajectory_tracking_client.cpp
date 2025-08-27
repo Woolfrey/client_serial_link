@@ -2,8 +2,8 @@
  * @file    trajectory_tracking_client.cpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    July 2025
- * @version 2.0
+ * @date    August 2025
+ * @version 2.1
  * @brief   Launches clients for interacting with Cartesian and joint trajectory action servers.
  * 
  * @details This executables launches clients for interacting with the Cartesian & joint trajectory
@@ -64,7 +64,15 @@ int main(int argc, char **argv)
     std::shared_ptr<ActionClientInterface> activeClient = nullptr;                                  // To keep track of active client
 
     std::thread{[clientNode]() { rclcpp::spin(clientNode); }}.detach();                             // Spin the node in a separate thread so we can continue
-  
+
+    // Send initial command to robot to hold current pose
+    auto goal = std::make_shared<HoldConfigurationAction::Goal>();
+    
+    goal->tolerances = jointErrorTolerances;
+    
+    if (holdConfigurationClient->send_goal(goal)) activeClient = holdConfigurationClient;
+    else throw std::runtime_error("Failed to establish control of the robot.");
+          
     while (rclcpp::ok())
     {
         // Get user input
@@ -79,6 +87,7 @@ int main(int argc, char **argv)
             {
                 RCLCPP_INFO(clientNode->get_logger(), "- %s", config.first.c_str());
             }
+            
             RCLCPP_INFO(clientNode->get_logger(), "Available Cartesian commands:");
             for(const auto &pose : endpointPoses)
             {
@@ -96,6 +105,19 @@ int main(int argc, char **argv)
         else if(commandPrompt == "cancel" or  commandPrompt == "")
         {
             stop_robot(activeClient);
+            
+            auto goal = std::make_shared<HoldConfigurationAction::Goal>();
+            goal->tolerances = jointErrorTolerances;
+            
+            if (holdConfigurationClient->send_goal(goal))
+            {
+                activeClient = holdConfigurationClient;
+            }
+            else
+            {
+                throw std::runtime_error("FLAGRANT SYSTEM ERROR. Control over.");
+                break;
+            }
         }
         else
         {
@@ -105,8 +127,8 @@ int main(int argc, char **argv)
             {
                 if (activeClient != nullptr && activeClient->is_running()) stop_robot(activeClient); // Stop the robot if its active
 
-                auto goal = std::make_shared<JointTrajectoryAction::Goal>();
-                goal->points = iterator->second;                                                    // std::vector<JointTrajectoryPoints>
+                auto goal        = std::make_shared<JointTrajectoryAction::Goal>();
+                goal->points     = iterator->second;                                                // std::vector<JointTrajectoryPoints>
                 goal->tolerances = jointErrorTolerances;
 
                 // Custom function for when action is finished

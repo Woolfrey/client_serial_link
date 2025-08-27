@@ -2,8 +2,8 @@
  * @file    follow_twist_client.cpp
  * @author  Jon Woolfrey
  * @email   jonathan.woolfrey@gmail.com
- * @date    July 2025
- * @version 2.0
+ * @date    August 2025
+ * @version 2.1
  * @brief   An action client and user interface for controlling a robot through the FollowTwist action.
  * 
  * @details This executable launches clients for a TrackJointTrajectory & FollowTwist actions.
@@ -62,7 +62,15 @@ int main(int argc, char **argv)
     std::shared_ptr<ActionClientInterface> activeClient = nullptr;                                  // To keep track of active client
 
     std::thread{[clientNode]() { rclcpp::spin(clientNode); }}.detach();                             // Spin the node in a separate thread so we can continue
-  
+ 
+    // Send initial command to robot to hold current pose
+    auto goal = std::make_shared<HoldConfigurationAction::Goal>();
+    
+    goal->tolerances = jointErrorTolerances;
+    
+    if (holdConfigurationClient->send_goal(goal)) activeClient = holdConfigurationClient;
+    else throw std::runtime_error("Failed to establish control of the robot.");
+           
     while (rclcpp::ok())
     {
         // Get user input
@@ -91,6 +99,19 @@ int main(int argc, char **argv)
         else if(commandPrompt == "cancel" or  commandPrompt == "")
         {
             stop_robot(activeClient);
+            
+            auto goal = std::make_shared<HoldConfigurationAction::Goal>();
+            goal->tolerances = jointErrorTolerances;
+            
+            if (holdConfigurationClient->send_goal(goal))
+            {
+                activeClient = holdConfigurationClient;
+            }
+            else
+            {
+                throw std::runtime_error("FLAGRANT SYSTEM ERROR. Control over.");
+                break;
+            }
         }
         else if(commandPrompt == "follow")
         {
